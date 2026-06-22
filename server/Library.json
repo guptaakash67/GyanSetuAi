@@ -1,0 +1,101 @@
+{
+  "traditions": [
+    {
+      "id": "hindu",
+      "slug": "hindu",
+      "name": "Hindu Tradition",
+      "tradition": "Hindu",
+      "tagline": "Diverse philosophical and devotional paths rooted in the Vedas.",
+      "textCount": 5
+    },
+    {
+      "id": "taoism",
+      "slug": "taoism",
+      "name": "Tao Te Ching",
+      "tradition": "Taoism",
+      "tagline": "Ancient Chinese wisdom on the nature of reality, simplicity, and harmony.",
+      "textCount": 81
+    },
+    {
+      "id": "buddhism",
+      "slug": "buddhism",
+      "name": "Buddhist Sutras",
+      "tradition": "Buddhism",
+      "tagline": "Teachings on mindfulness, compassion, and the path to enlightenment.",
+      "textCount": 450
+    },
+    {
+      "id": "christian",
+      "slug": "christian",
+      "name": "Bible",
+      "tradition": "Christian",
+      "tagline": "Sacred text containing wisdom, guidance, and spiritual principles.",
+      "textCount": 1169
+    },
+    {
+      "id": "islamic",
+      "slug": "islamic",
+      "name": "Quran",
+      "tradition": "Islamic",
+      "tagline": "Divine revelation containing wisdom, law, and spiritual guidance.",
+      "textCount": 114
+    }
+  ],
+  "texts": {
+    "hindu": [
+      {
+        "id": "bhagavad-gita",
+        "title": "Bhagavad Gita",
+        "description": "Divine wisdom through Lord Krishna's teachings on duty, purpose, and enlightenment."
+      },
+      {
+        "id": "upanishads",
+        "title": "Upanishads",
+        "description": "Philosophical treatises exploring the nature of Brahman and the self."
+      },
+      {
+        "id": "ramayana",
+        "title": "Ramayana",
+        "description": "Epic tale of Lord Rama embodying dharma, devotion, and righteousness."
+      },
+      {
+        "id": "mahabharata",
+        "title": "Mahabharata",
+        "description": "Epic narrative encompassing duty, karma, and the complexities of life."
+      },
+      {
+        "id": "hindu-philosophy",
+        "title": "Hindu Philosophy",
+        "description": "Core philosophical schools and concepts within the Hindu tradition."
+      }
+    ],
+    "taoism": [
+      {
+        "id": "tao-te-ching",
+        "title": "Tao Te Ching",
+        "description": "81 short chapters on living in harmony with the Tao."
+      }
+    ],
+    "buddhism": [
+      {
+        "id": "dhammapada",
+        "title": "Dhammapada",
+        "description": "Verses on the path to enlightenment and ethical living."
+      }
+    ],
+    "christian": [
+      {
+        "id": "bible",
+        "title": "Bible",
+        "description": "Old and New Testament scripture and teachings."
+      }
+    ],
+    "islamic": [
+      {
+        "id": "quran",
+        "title": "Quran",
+        "description": "Divine revelation organized into 114 surahs."
+      }
+    ]
+  }
+}

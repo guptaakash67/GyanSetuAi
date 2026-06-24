@@ -6,7 +6,7 @@
       "name": "Hindu Tradition",
       "tradition": "Hindu",
       "tagline": "Diverse philosophical and devotional paths rooted in the Vedas.",
-      "textCount": 5
+      "textCount": 6
     },
     {
       "id": "taoism",
@@ -29,7 +29,7 @@
       "slug": "christian",
       "name": "Bible",
       "tradition": "Christian",
-      "tagline": "Sacred text containing wisdom, guidance, and spiritual principles.",
+      "tagline": "Sacred text containing wis  dom, guidance, and spiritual principles.",
       "textCount": 1169
     },
     {
@@ -74,6 +74,26 @@
         "id": "tao-te-ching",
         "title": "Tao Te Ching",
         "description": "81 short chapters on living in harmony with the Tao."
+      },
+      {
+        "id": "zhuangzi",
+        "title": "Zhuangzi",
+        "description": "A foundational Taoist text filled with stories, parables, and philosophical reflections. It encourages freedom from rigid thinking, acceptance of change, spontaneity, and alignment with nature. The teachings inspire readers to transcend limitations and embrace life's mysteries."
+      },
+      {
+        "id": "wu-wei",
+        "title": "Wu Wei",
+        "description": "The Taoist principle of effortless action. Rather than forcing outcomes, Wu Wei teaches acting in accordance with the natural flow of events. It promotes peace, effectiveness, and harmony by working with life's rhythms instead of against them."
+      },
+      {
+        "id": "yin-yang",
+        "title": "Yin and Yang",
+        "description": "The Taoist concept of complementary opposites. Yin and Yang represent balance in the universe, showing how seemingly opposing forces are interconnected and interdependent. Understanding this principle helps cultivate harmony in relationships, decisions, and daily life."
+      },
+      {
+        "id": "tao",
+        "title": "The Tao",
+        "description": "The central concept of Taoism, often translated as 'The Way.' The Tao is the underlying natural order and source of all existence. It cannot be fully described in words but can be experienced through mindful living, simplicity, and alignment with nature."
       }
     ],
     "buddhism": [

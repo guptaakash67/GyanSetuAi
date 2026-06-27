@@ -13,6 +13,7 @@ const TRADITION_STYLES = {
   buddhism: { gradient: "from-amber-400 to-yellow-500", emoji: "🔔" },
   christian: { gradient: "from-blue-500 to-indigo-500", emoji: "📖" },
   islamic: { gradient: "from-emerald-500 to-green-600", emoji: "☪️" },
+  teshu: { gradient: "from-sky-400 to-indigo-500", emoji: "🌿" },
   default: { gradient: "from-violet-500 to-fuchsia-500", emoji: "✨" },
 };
 
@@ -185,7 +186,7 @@ function TraditionTexts({ slug }) {
     <div className="min-h-screen bg-[#F7F8FA]">
       <BackBar />
 
-      <div className="mx-auto max-w-4xl px-6 py-10">
+      <div className="mx-auto max-w-7xl px-6 py-10">
         {traditionLoading ? (
           <div className="space-y-3">
             <div className="h-3 w-20 animate-pulse rounded bg-slate-200" />

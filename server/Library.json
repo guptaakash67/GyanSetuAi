@@ -3,10 +3,10 @@
     {
       "id": "hindu",
       "slug": "hindu",
-      "name": "Hindu Tradition",
+      "name": "Bhagavad Gita",
       "tradition": "Hindu",
       "tagline": "Diverse philosophical and devotional paths rooted in the Vedas.",
-      "textCount": 6
+      "textCount": 5
     },
     {
       "id": "taoism",
@@ -14,7 +14,7 @@
       "name": "Tao Te Ching",
       "tradition": "Taoism",
       "tagline": "Ancient Chinese wisdom on the nature of reality, simplicity, and harmony.",
-      "textCount": 81
+      "textCount": 5
     },
     {
       "id": "buddhism",
@@ -22,15 +22,15 @@
       "name": "Buddhist Sutras",
       "tradition": "Buddhism",
       "tagline": "Teachings on mindfulness, compassion, and the path to enlightenment.",
-      "textCount": 450
+      "textCount": 5
     },
     {
       "id": "christian",
       "slug": "christian",
       "name": "Bible",
       "tradition": "Christian",
-      "tagline": "Sacred text containing wis  dom, guidance, and spiritual principles.",
-      "textCount": 1169
+      "tagline": "Sacred text containing wisdom, guidance, and spiritual principles.",
+      "textCount": 5
     },
     {
       "id": "islamic",
@@ -38,7 +38,15 @@
       "name": "Quran",
       "tradition": "Islamic",
       "tagline": "Divine revelation containing wisdom, law, and spiritual guidance.",
-      "textCount": 114
+      "textCount": 5
+    },
+    {
+      "id": "hindu",
+      "slug": "hindu",
+      "name": "Upanishads",
+      "tradition": "Hindu",
+      "tagline": "A modern spiritual path emphasizing mindfulness, compassion, and self-discovery.",
+      "textCount": 1
     }
   ],
   "texts": {
@@ -67,55 +75,152 @@
         "id": "hindu-philosophy",
         "title": "Hindu Philosophy",
         "description": "Core philosophical schools and concepts within the Hindu tradition."
+      },
+      {
+        "id": "philosophy",
+        "title": "Hindu Philosophy",
+        "description": "Core philosophical schools and concepts within the Hindu tradition."
       }
     ],
     "taoism": [
       {
         "id": "tao-te-ching",
         "title": "Tao Te Ching",
-        "description": "81 short chapters on living in harmony with the Tao."
+        "description": "81 chapters of poetic wisdom on living in harmony with the natural way."
       },
       {
         "id": "zhuangzi",
         "title": "Zhuangzi",
-        "description": "A foundational Taoist text filled with stories, parables, and philosophical reflections. It encourages freedom from rigid thinking, acceptance of change, spontaneity, and alignment with nature. The teachings inspire readers to transcend limitations and embrace life's mysteries."
+        "description": "Philosophical stories and parables exploring spontaneity, freedom, and the nature of reality."
       },
       {
-        "id": "wu-wei",
-        "title": "Wu Wei",
-        "description": "The Taoist principle of effortless action. Rather than forcing outcomes, Wu Wei teaches acting in accordance with the natural flow of events. It promotes peace, effectiveness, and harmony by working with life's rhythms instead of against them."
+        "id": "liezi",
+        "title": "Liezi",
+        "description": "Ancient Taoist text on the nature of existence, fate, and spiritual transformation."
       },
       {
-        "id": "yin-yang",
-        "title": "Yin and Yang",
-        "description": "The Taoist concept of complementary opposites. Yin and Yang represent balance in the universe, showing how seemingly opposing forces are interconnected and interdependent. Understanding this principle helps cultivate harmony in relationships, decisions, and daily life."
+        "id": "hua-hu-ching",
+        "title": "Hua Hu Ching",
+        "description": "Lesser-known teachings of Lao Tzu on practical wisdom and spiritual cultivation."
       },
       {
-        "id": "tao",
-        "title": "The Tao",
-        "description": "The central concept of Taoism, often translated as 'The Way.' The Tao is the underlying natural order and source of all existence. It cannot be fully described in words but can be experienced through mindful living, simplicity, and alignment with nature."
+        "id": "i-ching",
+        "title": "I Ching",
+        "description": "Ancient divination text exploring change, balance, and the flow of the universe."
       }
     ],
     "buddhism": [
       {
         "id": "dhammapada",
         "title": "Dhammapada",
-        "description": "Verses on the path to enlightenment and ethical living."
+        "description": "423 verses on the path to enlightenment, mindfulness, and ethical living."
+      },
+      {
+        "id": "heart-sutra",
+        "title": "Heart Sutra",
+        "description": "Core Mahayana text on emptiness, wisdom, and the nature of reality."
+      },
+      {
+        "id": "lotus-sutra",
+        "title": "Lotus Sutra",
+        "description": "One of the most influential Mahayana sutras on universal Buddha-nature."
+      },
+      {
+        "id": "majjhima-nikaya",
+        "title": "Majjhima Nikaya",
+        "description": "Middle-length discourses of the Buddha covering ethics, meditation, and wisdom."
+      },
+      {
+        "id": "tibetan-book-of-dead",
+        "title": "Tibetan Book of the Dead",
+        "description": "Guidance on consciousness, death, and the journey toward liberation."
       }
     ],
     "christian": [
       {
-        "id": "bible",
-        "title": "Bible",
-        "description": "Old and New Testament scripture and teachings."
+        "id": "gospel-of-matthew",
+        "title": "Gospel of Matthew",
+        "description": "Account of Jesus's life, teachings, and the Sermon on the Mount."
+      },
+      {
+        "id": "psalms",
+        "title": "Psalms",
+        "description": "150 poetic hymns and prayers expressing devotion, gratitude, and lament."
+      },
+      {
+        "id": "proverbs",
+        "title": "Proverbs",
+        "description": "Practical wisdom on righteousness, discipline, and living a godly life."
+      },
+      {
+        "id": "gospel-of-john",
+        "title": "Gospel of John",
+        "description": "Spiritual account of Jesus emphasizing love, light, and eternal life."
+      },
+      {
+        "id": "letters-of-paul",
+        "title": "Letters of Paul",
+        "description": "Epistles on faith, grace, love, and the nature of the Christian community."
       }
     ],
     "islamic": [
       {
-        "id": "quran",
-        "title": "Quran",
-        "description": "Divine revelation organized into 114 surahs."
+        "id": "quran-al-fatiha",
+        "title": "Al-Fatiha",
+        "description": "The opening chapter — a prayer for guidance recited in every Muslim prayer."
+      },
+      {
+        "id": "quran-al-baqarah",
+        "title": "Al-Baqarah",
+        "description": "The longest surah covering faith, law, prayer, and moral guidance."
+      },
+      {
+        "id": "quran-al-imran",
+        "title": "Al-Imran",
+        "description": "Teachings on the family of Imran, unity of God, and steadfastness in faith."
+      },
+      {
+        "id": "hadith-bukhari",
+        "title": "Hadith — Sahih Bukhari",
+        "description": "Most authentic collection of the Prophet Muhammad's sayings and actions."
+      },
+      {
+        "id": "rumi-masnavi",
+        "title": "Masnavi — Rumi",
+        "description": "Six volumes of mystical Sufi poetry exploring love, longing, and divine union."
       }
-    ]
+    ],
+      "teshu": [
+    {
+      "id": "teshu",
+      "title": "Teshu",
+      "description": "A modern spiritual path emphasizing mindfulness, compassion, and self-discovery."
+    },
+    {
+      "id": "mindful-living",
+      "title": "Mindful Living",
+      "description": "Practicing full awareness in daily activities to cultivate presence, gratitude, and inner peace."
+    },
+    {
+      "id": "compassionate-heart",
+      "title": "Compassionate Heart",
+      "description": "Encourages kindness, empathy, and understanding toward oneself and all living beings."
+    },
+    {
+      "id": "inner-awakening",
+      "title": "Inner Awakening",
+      "description": "A journey of self-reflection and personal growth aimed at discovering one's true nature and purpose."
+    },
+    {
+      "id": "universal-connection",
+      "title": "Universal Connection",
+      "description": "Teaches that all life is interconnected and that harmony arises through respect for nature and humanity."
+    },
+    {
+      "id": "path-of-balance",
+      "title": "Path of Balance",
+      "description": "Focuses on maintaining equilibrium between mind, body, emotions, and spirit for holistic well-being."
+    }
+  ]
   }
 }

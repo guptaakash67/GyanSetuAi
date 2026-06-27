@@ -46,7 +46,7 @@ export default function WisdomGuide() {
     <div className="min-h-screen bg-[#F7F8FA]">
       <BackBar />
 
-      <section className="mx-auto max-w-2xl px-6 pt-16 text-center">
+      <section className="mx-auto max-w-7xl px-6 pt-16 text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 px-4 py-1.5 text-sm font-medium text-indigo-700">
           <SparklesIcon className="h-4 w-4" />
           Wisdom Guide

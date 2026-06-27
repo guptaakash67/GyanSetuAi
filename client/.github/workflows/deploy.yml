@@ -1,0 +1,81 @@
+name: GyanSetu CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Frontend: Lint + Build + Deploy to Vercel ────────────────────────────
+  frontend:
+    name: Frontend (Vercel)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client  # adjust if your Vite folder is named differently
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}  # your Railway backend URL
+
+      # Only deploy on push to main, not on pull requests
+      - name: Deploy to Vercel
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # ── Backend: Lint + Test + Deploy to Railway ─────────────────────────────
+  backend:
+    name: Backend (Railway)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: server  # adjust if your FastAPI folder is named differently
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn
+          # Once you have a requirements.txt, replace above with:
+          # pip install -r requirements.txt
+
+      - name: Check syntax (no errors)
+        run: python -m py_compile main.py
+
+      # Only deploy on push to main, not on pull requests
+      - name: Deploy to Railway
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          npm install -g @railway/cli
+          railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

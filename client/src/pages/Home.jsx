@@ -53,7 +53,7 @@ export default function Home() {
       <Navbar />
 
       {/* Hero */}
-      <section className="mx-auto max-w-3xl px-6 pt-20 pb-16 text-center">
+      <section className="mx-auto max-w-7xl px-6 pt-20 pb-16 text-center">
         <span className="inline-block rounded-full bg-indigo-100 px-4 py-1.5 text-sm font-medium text-indigo-700">
           Welcome to Wisdom
         </span>
@@ -62,7 +62,7 @@ export default function Home() {
           Ancient Wisdom for Modern Life
         </h1>
 
-        <p className="mx-auto mt-5 max-w-xl text-base text-slate-500">
+        <p className="mx-auto mt-5 max-w-5xl text-base text-slate-500">
           Discover spiritual guidance tailored to your unique challenges. Find clarity through
           timeless wisdom.
         </p>
@@ -93,8 +93,8 @@ export default function Home() {
       </section>
 
       {/* Feature cards */}
-      <section className="mx-auto max-w-5xl px-6">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <section className="mx-auto max-w20xl px-5 py-20 text-center sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:gap-8">
           {FEATURE_CARDS.map(({ icon: Icon, title, description, to }) => (
             <button
               key={title}
@@ -145,7 +145,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mx-auto max-w-0xl px-6 py-12">
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {FOOTER_COLUMNS.map((col) => (
               <div key={col.title}>

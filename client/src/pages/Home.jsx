@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import { SearchIcon, BoltIcon, BookOpenIcon, CompassIcon } from "../components/Icons";
 import { useFetch } from "../hooks/useFetch";
 import { libraryApi } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 
 const TOPIC_CHIPS = ["Relationships", "Personal Growth", "Finding Purpose"];
 
@@ -36,6 +37,7 @@ const FOOTER_COLUMNS = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
 
@@ -129,7 +131,7 @@ export default function Home() {
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <button
-            onClick={() => navigate("/sign-up")}
+            onClick={() => navigate(user ? "/wisdom-guide" : "/sign-up")}
             className="rounded-full bg-indigo-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-800"
           >
             Get Started

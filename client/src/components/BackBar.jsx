@@ -5,7 +5,7 @@ export default function BackBar() {
   const navigate = useNavigate();
 
   // Read user from localStorage — set this after login:
-  // localStorage.setItem("user", JSON.stringify({ name: "Akash", initial: "A" }))
+  // localStorage.setItem("user", JSON.stringify({ name: "John Doe", initial: "J" }))
   const stored = localStorage.getItem("user");
   const user = stored ? JSON.parse(stored) : null;
   const initial = user?.initial || user?.name?.charAt(0).toUpperCase() || null;

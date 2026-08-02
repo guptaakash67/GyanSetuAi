@@ -17,27 +17,27 @@ from email.mime.multipart import MIMEMultipart
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session  # ← ADDED
 import jwt
 import bcrypt
-from redis_client import redis_client
 
+from database import get_db  # ← ADDED
+from models import User       # ← ADDED
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
 
-# ── Config (set these in your .env) ─────────────────────────────────────────
+# ── Config ───────────────────────────────────────────────────────────────────
 JWT_SECRET = "6a76f0cfa0e26e4185a036a69f6fba56bb9103a656a334a1334ae6bca90dcede"
 JWT_EXPIRE_DAYS = 7
 
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_EMAIL = "noreplygyansetu@gmail.com"
-SMTP_PASSWORD = "lxux kdnc aowh eulv" # Gmail App Password (not your Gmail password)
+SMTP_PASSWORD = "lxux kdnc aowh eulv"
 
-# ── In-memory stores (replace with DB once you set it up) ───────────────────
-# { email: { name, hashed_password, verified } }
-USERS = {}
-# { email: { otp, expires_at } }
+# ── REMOVED: USERS = {} → now stored in PostgreSQL
+# ── KEPT: OTP_STORE in-memory (Redis will replace this later)
 OTP_STORE = {}
 
 
@@ -63,7 +63,7 @@ def generate_otp(length=6):
 
 def send_otp_email(to_email: str, otp: str, name: str):
     if not SMTP_EMAIL or not SMTP_PASSWORD:
-        raise HTTPException(status_code=500, detail="Email service not configured. Set SMTP_EMAIL and SMTP_APP_PASSWORD in .env")
+        raise HTTPException(status_code=500, detail="Email service not configured.")
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "GyanSetu - Your Verification Code"
@@ -78,7 +78,6 @@ def send_otp_email(to_email: str, otp: str, name: str):
         </div>
         <h2 style="margin:12px 0 0;color:#0f172a;font-size:20px;">GyanSetu</h2>
       </div>
-
       <div style="background:white;border-radius:12px;padding:28px;text-align:center;">
         <p style="color:#475569;margin:0 0 8px;">Hi {name},</p>
         <p style="color:#475569;margin:0 0 24px;">Your verification code is:</p>
@@ -87,7 +86,6 @@ def send_otp_email(to_email: str, otp: str, name: str):
         </div>
         <p style="color:#94a3b8;font-size:13px;margin:20px 0 0;">This code expires in 60 seconds.</p>
       </div>
-
       <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">
         If you didn't request this, please ignore this email.
       </p>
@@ -104,7 +102,6 @@ def send_otp_email(to_email: str, otp: str, name: str):
 
 def create_jwt(email: str, name: str):
     print("JWT_SECRET =", JWT_SECRET)
-
     payload = {
         "email": email,
         "name": name,
@@ -126,30 +123,42 @@ def decode_jwt(token: str):
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     return decode_jwt(credentials.credentials)
 
-# for testing/debugging purposes, you can view the current OTP_STORE and USERS
+
+# ── Debug ─────────────────────────────────────────────────────────────────────
 @router.get("/debug")
-def debug():
+def debug(db: Session = Depends(get_db)):  # ← CHANGED: reads from DB now
+    users = db.query(User).all()
     return {
         "otp_store": {k: {"otp": v["otp"]} for k, v in OTP_STORE.items()},
-        "users": list(USERS.keys())
+        "users": [u.email for u in users]  # ← CHANGED: from DB not dict
     }
 
-# ── Routes ───────────────────────────────────────────────────────────────────
+
+# ── Routes ────────────────────────────────────────────────────────────────────
 @router.post("/signup")
-def signup(body: SignupRequest):
+def signup(body: SignupRequest, db: Session = Depends(get_db)):  # ← ADDED db
     print("========== SIGNUP ==========")
     print(body)
 
     email = body.email.lower()
 
+    # ← CHANGED: check DB instead of USERS dict
+    existing = db.query(User).filter(User.email == email).first()
+    if existing and existing.verified:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
     hashed = bcrypt.hashpw(body.password.encode(), bcrypt.gensalt()).decode()
     print("Password hashed")
 
-    USERS[email] = {
-        "name": body.name,
-        "hashed_password": hashed,
-        "verified": False,
-    }
+    # ← CHANGED: save to DB instead of USERS dict
+    if existing:
+        existing.name = body.name
+        existing.hashed_password = hashed
+        db.commit()
+    else:
+        user = User(name=body.name, email=email, hashed_password=hashed, verified=False)
+        db.add(user)
+        db.commit()
 
     otp = generate_otp()
     print("Generated OTP:", otp)
@@ -158,7 +167,6 @@ def signup(body: SignupRequest):
         "otp": otp,
         "expires_at": datetime.utcnow() + timedelta(minutes=10),
     }
-
     print("OTP stored")
 
     try:
@@ -171,8 +179,9 @@ def signup(body: SignupRequest):
 
     return {"message": "OTP sent successfully"}
 
+
 @router.post("/verify-otp")
-def verify_otp(body: VerifyOTPRequest):
+def verify_otp(body: VerifyOTPRequest, db: Session = Depends(get_db)):  # ← ADDED db
     email = body.email.lower()
 
     if email not in OTP_STORE:
@@ -187,48 +196,53 @@ def verify_otp(body: VerifyOTPRequest):
     if body.otp != record["otp"]:
         raise HTTPException(status_code=400, detail="Incorrect OTP.")
 
-    # Mark user as verified
-    USERS[email]["verified"] = True
+    # ← CHANGED: mark verified in DB instead of USERS dict
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found. Please sign up first.")
+
+    user.verified = True
+    db.commit()
     del OTP_STORE[email]
 
-    name = USERS[email]["name"]
-    token = create_jwt(email, name)
+    token = create_jwt(email, user.name)  # ← CHANGED: name from DB
 
     print("===== DEBUG =====")
     print("Email:", email)
-    print("Name:", name)
+    print("Name:", user.name)
     print("Token:", token)
     print("=================")
 
     return {
         "token": token,
         "user": {
-            "name": name,
+            "name": user.name,
             "email": email,
-            "initial": name[0].upper(),
+            "initial": user.name[0].upper(),
         },
     }
 
 
 @router.post("/signin")
-def signin(body: SigninRequest):
+def signin(body: SigninRequest, db: Session = Depends(get_db)):  # ← ADDED db
     email = body.email.lower()
 
-    if email not in USERS or not USERS[email]["verified"]:
+    # ← CHANGED: query DB instead of USERS dict
+    user = db.query(User).filter(User.email == email, User.verified == True).first()
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    user = USERS[email]
-    if not bcrypt.checkpw(body.password.encode(), user["hashed_password"].encode()):
+    if not bcrypt.checkpw(body.password.encode(), user.hashed_password.encode()):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    token = create_jwt(email, user["name"])
+    token = create_jwt(email, user.name)
 
     return {
         "token": token,
         "user": {
-            "name": user["name"],
+            "name": user.name,
             "email": email,
-            "initial": user["name"][0].upper(),
+            "initial": user.name[0].upper(),
         },
     }
 

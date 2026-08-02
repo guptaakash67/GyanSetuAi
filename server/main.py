@@ -3,9 +3,10 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from database import init_db
 from auth_routes import router as auth_router
 
-load_dotenv()  # reads your .env file
+load_dotenv()
 
 app = FastAPI()
 
@@ -15,12 +16,17 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
-        "http://127.0.0.1:3000", 
+        "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize database tables on startup
+@app.on_event("startup")
+def startup():
+    init_db()
 
 # Register routers
 app.include_router(auth_router)
@@ -30,7 +36,6 @@ data = json.loads(Path("library.json").read_text(encoding="utf-8"))
 TRADITIONS = data["traditions"]
 TRADITION_TEXTS = data["texts"]
 
-# Define API endpoints
 @app.get("/")
 def root():
     return {"message": "GyanSetu API is running!"}

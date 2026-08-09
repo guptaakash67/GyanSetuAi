@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from database import init_db
+from redis_client import test_connection
 from auth_routes import router as auth_router
 
 load_dotenv()
@@ -23,15 +24,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize database tables on startup
 @app.on_event("startup")
 def startup():
-    init_db()
+    init_db()        # creates PostgreSQL tables
+    test_connection() # tests Redis connection
 
-# Register routers
 app.include_router(auth_router)
 
-# Load library data
 data = json.loads(Path("library.json").read_text(encoding="utf-8"))
 TRADITIONS = data["traditions"]
 TRADITION_TEXTS = data["texts"]

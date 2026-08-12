@@ -31,7 +31,7 @@ security = HTTPBearer()
 # ── Config ───────────────────────────────────────────────────────────────────
 JWT_SECRET = "6a76f0cfa0e26e4185a036a69f6fba56bb9103a656a334a1334ae6bca90dcede"
 JWT_EXPIRE_DAYS = 7
-OTP_EXPIRE_SECONDS = 600  # 10 minutes
+OTP_EXPIRE_SECONDS = 60  # 10 minutes
 
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
@@ -97,7 +97,7 @@ def send_otp_email(to_email: str, otp: str, name: str):
         <div style="background:#eef2ff;border-radius:12px;padding:20px;letter-spacing:12px;font-size:32px;font-weight:700;color:#3730a3;">
           {otp}
         </div>
-        <p style="color:#94a3b8;font-size:13px;margin:20px 0 0;">This code expires in 10 minutes.</p>
+        <p style="color:#94a3b8;font-size:13px;margin:20px 0 0;">This code expires in 1 minutes.</p>
       </div>
       <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">
         If you didn't request this, please ignore this email.

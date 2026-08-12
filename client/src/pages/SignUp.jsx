@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authApi } from "../lib/api";
@@ -13,7 +13,32 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-``
+
+  // Countdown timer for resend
+  const [countdown, setCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+
+  // Start countdown when OTP step begins
+  useEffect(() => {
+    if (step !== "otp") return;
+
+    setCountdown(60);
+    setCanResend(false);
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [step]);
+
   // Step 1 — submit signup, trigger OTP email
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -30,34 +55,39 @@ export default function SignUp() {
     }
   };
 
+  // Resend OTP
+  const handleResend = async () => {
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      await authApi.signup(form.name, form.email, form.password);
+      setSuccess("New OTP sent to your email.");
+      setOtp("");
+      // Restart countdown
+      setStep("signup");
+      setTimeout(() => setStep("otp"), 0);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Failed to resend OTP.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Step 2 — verify OTP
-const handleVerify = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
-
-  try {
-    await authApi.verifyOTP(form.email, otp);
-
-    // Remove any existing login
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    // Redirect to Sign In page
-    navigate("/sign-in", {
-      replace: true,
-      state: {
-        email: form.email,
-        message: "Email verified successfully. Please sign in.",
-      },
-    });
-
-  } catch (err) {
-    setError(err.response?.data?.detail || "Invalid or expired OTP.");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await authApi.verifyOTP(form.email, otp);
+      navigate("/sign-in", { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.detail || "Invalid or expired OTP.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] px-4">
@@ -66,7 +96,7 @@ const handleVerify = async (e) => {
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-700 text-base font-bold text-white">
-              GS
+              G
             </span>
             <span className="text-xl font-bold text-slate-900">GyanSetu</span>
           </Link>
@@ -104,7 +134,7 @@ const handleVerify = async (e) => {
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Your full name"
+                  placeholder="First Last"
                   className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
               </div>
@@ -171,8 +201,27 @@ const handleVerify = async (e) => {
                 disabled={loading || otp.length !== 6}
                 className="w-full rounded-xl bg-indigo-900 py-3 text-sm font-semibold text-white hover:bg-indigo-800 disabled:opacity-60"
               >
-                {loading ? "Verifying…" : "Verify & Sign In"}
+                {loading ? "Verifying…" : "Verify & Continue"}
               </button>
+
+              {/* Resend OTP */}
+              <div className="text-center text-sm">
+                {canResend ? (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={loading}
+                    className="font-medium text-indigo-700 hover:underline disabled:opacity-50"
+                  >
+                    Resend OTP
+                  </button>
+                ) : (
+                  <p className="text-slate-500">
+                    Resend OTP in{" "}
+                    <span className="font-semibold text-indigo-700">{countdown}s</span>
+                  </p>
+                )}
+              </div>
 
               <button
                 type="button"

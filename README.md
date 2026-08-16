@@ -1,48 +1,22 @@
-# GyanSetu 🕉️
+# GyanSetu
 
-> Ancient Wisdom for Modern Life — A full-stack spiritual guidance platform with AI-powered scripture chat, multi-faith library, and personalized journey tracking.
-
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react)](https://react.dev/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=flat&logo=postgresql)](https://neon.tech/)
-[![Redis](https://img.shields.io/badge/Redis-Upstash-DC382D?style=flat&logo=redis)](https://upstash.com/)
+A full-stack spiritual guidance platform that enables AI-powered conversations with sacred scriptures using Retrieval Augmented Generation (RAG).
 
 ---
 
-## Screenshots
+## Overview
 
-| Home | Scripture Library | My Journey |
-|------|------------------|------------|
-| ![Home](./screenshots/home.png) | ![Library](./screenshots/library.png) | ![Journey](./screenshots/journey.png) |
+GyanSetu allows users to explore scriptures from 6 world traditions and interact with them through a context-aware AI chat. The platform uses semantic search to find relevant passages and grounds LLM responses in actual scripture content.
 
 ---
 
 ## Tech Stack
 
 **Frontend**
-- React 18 + Vite
-- Tailwind CSS
-- React Router v6
-- Axios
+- React 18, Vite, Tailwind CSS, React Router v6, Axios
 
 **Backend**
-- FastAPI (Python)
-- PostgreSQL via Neon (users, auth)
-- Redis via Upstash (OTP storage)
-- JWT authentication
-- SMTP via Gmail (OTP emails)
-
----
-
-## Features
-
-- 🔐 Email + Password auth with OTP email verification
-- 📚 Multi-faith Scripture Library (Hindu, Buddhism, Taoism, Christianity, Islam)
-- 🤖 AI-powered scripture chat
-- 🗺️ Personal spiritual journey tracking
-- 📖 Wisdom Guide — search by life challenge
-- 🔒 Protected routes with JWT
-- 📱 Mobile responsive with sidebar navigation
+- FastAPI, LangChain 1.x (LCEL), Groq (LLaMA 3.1), Pinecone, Neon PostgreSQL, Upstash Redis, JWT, bcrypt, Gmail SMTP
 
 ---
 
@@ -50,67 +24,71 @@
 
 ```
 GyanSetu/
-├── client/                  # React + Vite frontend
+├── client/
 │   ├── src/
-│   │   ├── components/      # Navbar, BackBar, Icons, ProtectedRoute
-│   │   ├── context/         # AuthContext
-│   │   ├── hooks/           # useFetch
-│   │   ├── lib/             # axios api client
-│   │   └── pages/           # Home, Library, WisdomGuide, Journey, SignIn, SignUp
-│   ├── .env                 # VITE_API_URL
+│   │   ├── components/        # Navbar, BackBar, Icons, ProtectedRoute
+│   │   ├── context/           # AuthContext
+│   │   ├── hooks/             # useFetch
+│   │   ├── lib/               # Axios client and API endpoints
+│   │   └── pages/             # Home, Library, ScriptureChat, WisdomGuide, Journey, SignIn, SignUp
+│   ├── .env
 │   └── package.json
-└── server/                  # FastAPI backend
-    ├── main.py              # app entry, routes
-    ├── auth_routes.py       # signup, verify-otp, signin, me
-    ├── database.py          # SQLAlchemy + Neon setup
-    ├── models.py            # User model
-    ├── redis_client.py      # Upstash Redis OTP client
-    ├── library.json         # scripture data
-    ├── requirements.txt
-    └── .env                 # secrets
+└── server/
+    ├── main.py                # Application entry point
+    ├── auth_routes.py         # Authentication endpoints
+    ├── chat_routes.py         # RAG chat and wisdom search
+    ├── rag_pipeline.py        # LangChain LCEL pipeline
+    ├── database.py            # PostgreSQL connection
+    ├── models.py              # SQLAlchemy models
+    ├── redis_client.py        # Redis OTP client
+    ├── ingest.py              # Scripture embedding script
+    ├── library.json           # Scripture data
+    └── requirements.txt
 ```
 
 ---
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
 - Node.js 18+
 - Python 3.11+
-- [Neon](https://neon.tech) PostgreSQL database
-- [Upstash](https://upstash.com) Redis database
-- Gmail account with [App Password](https://myaccount.google.com/apppasswords) enabled
+- Neon PostgreSQL database
+- Upstash Redis database
+- Pinecone vector database
+- Groq API key
+- Gmail account with App Password enabled
 
-### 1. Clone the repo
+---
 
-```bash
-git clone https://github.com/yourusername/GyanSetu.git
-cd GyanSetu
-```
+## Setup
 
-### 2. Backend setup
+### Backend
 
 ```bash
 cd server
 python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# macOS/Linux
-source venv/bin/activate
-
+venv\Scripts\activate        # Windows
+source venv/bin/activate     # macOS/Linux
 pip install -r requirements.txt
 ```
 
 Create `server/.env`:
 
-```env
-JWT_SECRET=your-long-random-secret-key
-SMTP_EMAIL=your@gmail.com
-SMTP_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
-DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
-REDIS_URL=rediss://default:password@host:6379
+```
+JWT_SECRET=
+SMTP_EMAIL=
+SMTP_APP_PASSWORD=
+DATABASE_URL=
+REDIS_URL=
+GROQ_API_KEY=
+PINECONE_API_KEY=
+PINECONE_INDEX=
+```
+
+Embed scriptures into Pinecone (run once):
+
+```bash
+python ingest.py
 ```
 
 Start the server:
@@ -119,13 +97,7 @@ Start the server:
 uvicorn main:app --reload --port 8000
 ```
 
-You should see:
-```
-✅ Database tables created successfully
-✅ Redis connected successfully
-```
-
-### 3. Frontend setup
+### Frontend
 
 ```bash
 cd client
@@ -134,7 +106,7 @@ npm install
 
 Create `client/.env`:
 
-```env
+```
 VITE_API_URL=http://localhost:8000
 ```
 
@@ -146,68 +118,61 @@ npm run dev
 
 ---
 
-## API Endpoints
+## API Reference
 
-### Auth
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/signup` | Register + send OTP |
-| POST | `/auth/verify-otp` | Verify OTP → returns JWT |
-| POST | `/auth/signin` | Login → returns JWT |
-| GET | `/auth/me` | Get current user |
+### Authentication
+
+| Method | Endpoint | Protected | Description |
+|--------|----------|-----------|-------------|
+| POST | `/auth/signup` | No | Register and send OTP |
+| POST | `/auth/verify-otp` | No | Verify OTP and receive JWT |
+| POST | `/auth/signin` | No | Login and receive JWT |
+| GET | `/auth/me` | Yes | Get current user |
 
 ### Library
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/library/traditions` | All traditions |
-| GET | `/library/traditions/:slug` | Single tradition |
-| GET | `/library/traditions/:slug/texts` | Texts for a tradition |
-| GET | `/library/stats` | Library statistics |
+
+| Method | Endpoint | Protected | Description |
+|--------|----------|-----------|-------------|
+| GET | `/library/traditions` | No | List all traditions |
+| GET | `/library/traditions/:slug` | No | Get single tradition |
+| GET | `/library/traditions/:slug/texts` | No | Get texts for a tradition |
+| GET | `/library/stats` | No | Library statistics |
+
+### Chat and Search
+
+| Method | Endpoint | Protected | Description |
+|--------|----------|-----------|-------------|
+| POST | `/wisdom/search` | No | Semantic search across scriptures |
+| POST | `/chat/:tradition` | Yes | RAG chat filtered by tradition |
+| POST | `/chat/scripture/:id` | Yes | RAG chat for a specific scripture |
 
 ---
 
-## Environment Variables
+## RAG Pipeline
 
-### Frontend (`client/.env`)
-| Variable | Description |
-|----------|-------------|
-| `VITE_API_URL` | Backend base URL |
-
-### Backend (`server/.env`)
-| Variable | Description |
-|----------|-------------|
-| `JWT_SECRET` | Secret key for JWT signing |
-| `SMTP_EMAIL` | Gmail address for OTP emails |
-| `SMTP_APP_PASSWORD` | Gmail App Password |
-| `DATABASE_URL` | Neon PostgreSQL connection string |
-| `REDIS_URL` | Upstash Redis connection string |
+```
+User input
+    -> Converted to vector using sentence-transformers
+    -> Pinecone retrieves 4 most similar scripture passages
+    -> LangChain LCEL builds prompt with context and question
+    -> Groq LLaMA 3.1 generates response
+    -> Answer and source citations returned to client
+```
 
 ---
 
 ## Contributing
 
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit changes: `git commit -m "feat: add your feature"`
-4. Push to branch: `git push origin feature/your-feature`
-5. Open a Pull Request
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/name`
+3. Commit your changes: `git commit -m "feat: description"`
+4. Push to the branch: `git push origin feature/name`
+5. Open a pull request
 
-**Commit message format:**
-```
-feat: add new feature
-fix: bug fix
-docs: documentation update
-refactor: code refactor
-```
+Commit convention: `feat`, `fix`, `docs`, `refactor`, `chore`
 
 ---
 
 ## License
 
-MIT License — see [LICENSE](./LICENSE) for details.
-
----
-
-<div align="center">
-  Built with ❤️ by <a href="https://github.com/yourusername">Akash Gupta</a>
-</div>
+MIT

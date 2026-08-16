@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from database import init_db
 from redis_client import test_connection
 from auth_routes import router as auth_router
+from chat_routes import router as chat_router
 
 load_dotenv()
 
@@ -26,10 +27,11 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    init_db()        # creates PostgreSQL tables
-    test_connection() # tests Redis connection
+    init_db()
+    test_connection()
 
 app.include_router(auth_router)
+app.include_router(chat_router)
 
 data = json.loads(Path("library.json").read_text(encoding="utf-8"))
 TRADITIONS = data["traditions"]

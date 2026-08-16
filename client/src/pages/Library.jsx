@@ -216,7 +216,7 @@ function TraditionTexts({ slug }) {
             texts?.map((text) => (
               <button
                 key={text.id}
-                onClick={() => navigate(`/scripture/${text.id}`)}
+                onClick={() => navigate(`/chat/${slug}/${text.id}`)} //new changes
                 className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">

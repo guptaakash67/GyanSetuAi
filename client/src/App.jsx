@@ -8,6 +8,7 @@ import Library from './pages/Library'
 import Journey from "./pages/JourneyPage"
 import SignIn from "./pages/SignIn"
 import SignUp from "./pages/SignUp"
+import ScriptureChat from './pages/ScriptureChat'  // ← ADD THIS
 
 function App() {
   return (
@@ -21,23 +22,10 @@ function App() {
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
 
-          {/* Protected routes — redirect to /sign-in if not logged in */}
-          <Route
-            path="/wisdom-guide"
-            element={
-              <ProtectedRoute>
-                <WisdomGuide />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/journey"
-            element={
-              <ProtectedRoute>
-                <Journey />
-              </ProtectedRoute>
-            }
-          />
+          {/* Protected routes */}
+          <Route path="/wisdom-guide" element={<ProtectedRoute><WisdomGuide /></ProtectedRoute>} />
+          <Route path="/journey" element={<ProtectedRoute><Journey /></ProtectedRoute>} />
+          <Route path="/chat/:tradition/:textId" element={<ProtectedRoute><ScriptureChat /></ProtectedRoute>} />  {/* ← ADD THIS */}
         </Routes>
       </BrowserRouter>
     </AuthProvider>

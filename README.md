@@ -1,6 +1,6 @@
 # GyanSetu
 
-A full-stack spiritual guidance platform that enables AI-powered conversations with sacred scriptures using Retrieval Augmented Generation (RAG).
+A fullstack spiritual guidance platform that enables AI-powered conversations with sacred scriptures using Retrieval Augmented Generation (RAG).
 
 ---
 

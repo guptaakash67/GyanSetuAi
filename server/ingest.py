@@ -150,7 +150,7 @@ SCRIPTURES = [
 
 
 def ingest():
-    print(f"🚀 Starting ingestion of {len(SCRIPTURES)} scriptures into Pinecone...")
+    print(f" Starting ingestion of {len(SCRIPTURES)} scriptures into Pinecone...")
 
     # Initialize Pinecone
     pc = Pinecone(api_key=PINECONE_API_KEY)

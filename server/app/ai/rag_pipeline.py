@@ -11,6 +11,7 @@ from pinecone import Pinecone
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX = os.getenv("PINECONE_INDEX", "tatva")
 
@@ -18,6 +19,18 @@ PINECONE_INDEX = os.getenv("PINECONE_INDEX", "tatva")
 _embeddings = None
 _vector_store = None
 _llm = None
+
+
+def validate_runtime_config():
+    missing = []
+    if not GROQ_API_KEY:
+        missing.append("GROQ_API_KEY")
+    if not PINECONE_API_KEY:
+        missing.append("PINECONE_API_KEY")
+    if not PINECONE_INDEX:
+        missing.append("PINECONE_INDEX")
+    return missing
+
 
 def get_embeddings():
     global _embeddings
@@ -29,6 +42,11 @@ def get_embeddings():
 
 def get_vector_store():
     global _vector_store
+    missing = validate_runtime_config()
+    if "PINECONE_API_KEY" in missing or "PINECONE_INDEX" in missing:
+        raise ValueError(
+            "Pinecone is not configured. Set PINECONE_API_KEY and PINECONE_INDEX in the server .env file."
+        )
     if _vector_store is None:
         pc = Pinecone(api_key=PINECONE_API_KEY)
         _vector_store = PineconeVectorStore(
@@ -38,12 +56,15 @@ def get_vector_store():
         )
     return _vector_store
 
+
 def get_llm():
     global _llm
+    if not GROQ_API_KEY:
+        raise ValueError("Groq is not configured. Set GROQ_API_KEY in the server .env file.")
     if _llm is None:
         _llm = ChatGroq(
             api_key=GROQ_API_KEY,
-            model_name="llama-3.1-8b-instant",
+            model_name=GROQ_MODEL,
             temperature=0.7,
             max_tokens=1024,
         )

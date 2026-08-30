@@ -26,9 +26,9 @@ GyanSetu helps users explore scriptures from multiple world traditions and inter
 - Redis
 - JWT + bcrypt
 - LangChain
-- Groq
-- Pinecone
-- Hugging Face embeddings
+- LLM: Groq with ChatGroq (LLaMA 3.1 / configured via `GROQ_MODEL`)
+- Vector DB: Pinecone
+- Embeddings: Hugging Face sentence-transformers
 - Gmail SMTP
 
 ---
@@ -170,21 +170,22 @@ npm run dev
 
 ## AI / RAG Pipeline
 
-The app uses a retrieval-based pipeline:
+The app uses a retrieval-based pipeline powered by an LLM:
 
 ```text
 User question
   -> semantic search in Pinecone
   -> top scripture passages retrieved
   -> context + prompt assembled in LangChain LCEL
-  -> Groq model generates grounded answer
+  -> Groq LLM generates a grounded answer
   -> answer + source metadata returned to client
 ```
 
 Current implementation uses:
 - `sentence-transformers/all-MiniLM-L6-v2` for embeddings
 - Pinecone vector search for scripture retrieval
-- Groq for answer generation
+- Groq `ChatGroq` as the LLM layer for response generation
+- LangChain LCEL to orchestrate retrieval + prompting + generation
 
 ---
 

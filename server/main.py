@@ -1,16 +1,24 @@
 import json
 from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from database import init_db
-from redis_client import test_connection
-from auth_routes import router as auth_router
-from chat_routes import router as chat_router
+
+from core.database import init_db
+from core.redis_client import test_connection
+from app.routes.auth_routes import router as auth_router
+from app.routes.chat_routes import router as chat_router
+from app.routes.journey_routes import router as journey_router
 
 load_dotenv()
 
-app = FastAPI()
+BASE_DIR = Path(__file__).resolve().parent
+LIBRARY_DATA = json.loads((BASE_DIR / "data" / "Library.json").read_text(encoding="utf-8"))
+TRADITIONS = LIBRARY_DATA.get("traditions", [])
+TRADITION_TEXTS = LIBRARY_DATA.get("texts", {})
+
+app = FastAPI(title="GyanSetu API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,10 +40,7 @@ def startup():
 
 app.include_router(auth_router)
 app.include_router(chat_router)
-
-data = json.loads(Path("library.json").read_text(encoding="utf-8"))
-TRADITIONS = data["traditions"]
-TRADITION_TEXTS = data["texts"]
+app.include_router(journey_router)
 
 @app.get("/")
 def root():

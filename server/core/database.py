@@ -1,15 +1,26 @@
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 from dotenv import load_dotenv
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set in .env")
+
 engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()
@@ -18,7 +29,9 @@ def get_db():
     finally:
         db.close()
 
+
 def init_db():
-    from models import User
+    from app.models.models import User, Insight, Milestone, ChatLog
+
     Base.metadata.create_all(bind=engine)
     print("Database tables created successfully")

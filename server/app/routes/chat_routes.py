@@ -9,8 +9,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional
-from rag_pipeline import ask_wisdom, search_scriptures
-from auth_routes import get_current_user
+from app.ai.rag_pipeline import ask_wisdom, search_scriptures
+from app.routes.auth_routes import get_current_user
 
 router = APIRouter(tags=["chat & wisdom"])
 security = HTTPBearer(auto_error=False)
@@ -43,6 +43,8 @@ def wisdom_search(body: WisdomSearchRequest):
             k=6
         )
         return {"results": results, "query": body.query}
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         print(f"Search error: {e}")
         raise HTTPException(status_code=500, detail="Search failed. Please try again.")
@@ -83,6 +85,8 @@ def chat_with_tradition(
             "content": result["answer"],
             "sources": result["sources"],
         }
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="Chat failed. Please try again.")
@@ -118,6 +122,8 @@ def chat_with_scripture(
             "content": result["answer"],
             "sources": result["sources"],
         }
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="Chat failed. Please try again.")

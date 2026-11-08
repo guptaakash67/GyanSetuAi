@@ -2,11 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MenuIcon, PanelLeftCloseIcon } from "./Icons";
 import { useAuth } from "../context/AuthContext";
+import appContent from "../data/app-content.json";
 
-const NAV_LINKS = [
-  { label: "Library", to: "/library" },
-  { label: "My Journey", to: "/journey" },
-];
+const NAV_LINKS = appContent.navigation.links;
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);

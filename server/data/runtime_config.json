@@ -1,0 +1,38 @@
+{
+  "app": {
+    "name": "GyanSetu API",
+    "version": "1.0.0",
+    "cors_origins": [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:3000"
+    ],
+    "years_of_wisdom": 5000
+  },
+  "ai": {
+    "pinecone_index": "tatva",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embedding_dimension": 384,
+    "pinecone_metric": "cosine",
+    "pinecone_cloud": "aws",
+    "pinecone_region": "us-east-1",
+    "groq_model": "openai/gpt-oss-20b",
+    "scraped_data_file": "gyansetu_cleaned_v1.csv",
+    "scraped_data_tradition": "hindu",
+    "temperature": 0.7,
+    "max_tokens": 1024,
+    "chat_retrieval_k": 4,
+    "search_results_k": 6,
+    "source_preview_characters": 200,
+    "prompt_template": "You are a wise and compassionate spiritual guide for GyanSetu.\nUse the provided scripture passages as the source for your answer. Do not invent quotations or claim a teaching is in the passages if it is not. If the context does not answer the question, say so clearly and offer only a careful, clearly labeled reflection.\nBe thoughtful, empathetic, and grounded in the actual scripture context.\n\nScripture Context:\n{context}\n\nSeeker's Question: {question}\n\nSpiritual Guidance:"
+  },
+  "auth": {
+    "jwt_expire_days": 7,
+    "jwt_algorithm": "HS256",
+    "otp_expire_seconds": 60,
+    "otp_length": 6,
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587
+  }
+}

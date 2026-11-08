@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
-from core.database import get_db
+from app.core.database import get_db
 from app.models.models import User, Insight, Milestone, ChatLog
 from app.routes.auth_routes import get_current_user
 

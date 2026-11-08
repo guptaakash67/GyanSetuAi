@@ -9,11 +9,14 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional
+from app.config import SCRIPTURES, RUNTIME_CONFIG
 from app.ai.rag_pipeline import ask_wisdom, search_scriptures
 from app.routes.auth_routes import get_current_user
 
 router = APIRouter(tags=["chat & wisdom"])
 security = HTTPBearer(auto_error=False)
+VALID_TRADITIONS = {scripture["tradition"] for scripture in SCRIPTURES}
+SEARCH_RESULTS_K = RUNTIME_CONFIG["ai"]["search_results_k"]
 
 
 # ── Schemas ──────────────────────────────────────────────────────────────────
@@ -40,7 +43,7 @@ def wisdom_search(body: WisdomSearchRequest):
         results = search_scriptures(
             query=body.query,
             tradition=body.tradition,
-            k=6
+            k=SEARCH_RESULTS_K,
         )
         return {"results": results, "query": body.query}
     except ValueError as e:
@@ -65,11 +68,10 @@ def chat_with_tradition(
 
     get_current_user(credentials)  # validate JWT
 
-    valid_traditions = ["hindu", "buddhism", "taoism", "christian", "islamic"]
-    if tradition not in valid_traditions:
+    if tradition not in VALID_TRADITIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid tradition. Choose from: {', '.join(valid_traditions)}"
+            detail=f"Invalid tradition. Choose from: {', '.join(sorted(VALID_TRADITIONS))}"
         )
 
     if not body.message.strip():

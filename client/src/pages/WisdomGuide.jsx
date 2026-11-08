@@ -3,17 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import BackBar from "../components/BackBar";
 import { SearchIcon, SparklesIcon } from "../components/Icons";
 import { wisdomApi } from "../lib/api";
+import appContent from "../data/app-content.json";
 
-const TOPICS = [
-  "Relationships",
-  "Work & Career",
-  "Anxiety & Fear",
-  "Purpose & Meaning",
-  "Loss & Grief",
-  "Personal Growth",
-  "Confidence & Self-Worth",
-  "Decision Making",
-];
+const TOPICS = appContent.wisdomTopics;
 
 export default function WisdomGuide() {
   const navigate = useNavigate();

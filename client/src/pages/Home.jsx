@@ -5,36 +5,16 @@ import { SearchIcon, BoltIcon, BookOpenIcon, CompassIcon } from "../components/I
 import { useFetch } from "../hooks/useFetch";
 import { libraryApi } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+import appContent from "../data/app-content.json";
+import appConfig from "../data/app-config.json";
 
-const TOPIC_CHIPS = ["Relationships", "Personal Growth", "Finding Purpose"];
-
-const FEATURE_CARDS = [
-  {
-    icon: BoltIcon,
-    title: "Wisdom Guide",
-    description: "Get personalized spiritual guidance based on your specific challenges and questions.",
-    to: "/wisdom-guide",
-  },
-  {
-    icon: BookOpenIcon,
-    title: "Scripture Library",
-    description: "Browse our comprehensive collection of spiritual texts and ancient wisdom.",
-    to: "/library",
-  },
-  {
-    icon: CompassIcon,
-    title: "My Journey",
-    description: "Track your spiritual growth and revisit your most meaningful insights.",
-    to: "/journey",
-  },
-];
-
-const FOOTER_COLUMNS = [
-  { title: "Product", links: ["Wisdom Guide", "Library", "My Journey"] },
-  { title: "Resources", links: ["Blog", "Guides", "FAQ"] },
-  { title: "Community", links: ["Discord", "Forum", "Events"] },
-  { title: "Legal", links: ["Privacy", "Terms", "Contact"] },
-];
+const { topicChips: TOPIC_CHIPS, featureCards: FEATURE_CARDS, footerColumns: FOOTER_COLUMNS } =
+  appContent.home;
+const FEATURE_ICONS = {
+  bolt: BoltIcon,
+  book: BookOpenIcon,
+  compass: CompassIcon,
+};
 
 export default function Home() {
   const { user } = useAuth();
@@ -97,28 +77,31 @@ export default function Home() {
       {/* Feature cards */}
       <section className="mx-auto max-w20xl px-5 py-20 text-center sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:gap-8">
-          {FEATURE_CARDS.map(({ icon: Icon, title, description, to }) => (
-            <button
-              key={title}
-              onClick={() => navigate(to)}
-              className="rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                <Icon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-4 text-base font-semibold text-slate-900">{title}</h3>
-              <p className="mt-1.5 text-sm text-slate-500">{description}</p>
-            </button>
-          ))}
+          {FEATURE_CARDS.map(({ icon, title, description, to }) => {
+            const Icon = FEATURE_ICONS[icon];
+            return (
+              <button
+                key={title}
+                onClick={() => navigate(to)}
+                className="rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <h3 className="mt-4 text-base font-semibold text-slate-900">{title}</h3>
+                <p className="mt-1.5 text-sm text-slate-500">{description}</p>
+              </button>
+            );
+          })}
         </div>
       </section>
 
       {/* Stats band */}
       <section className="mt-20 bg-slate-100/80 py-14">
         <div className="mx-auto grid max-w-4xl grid-cols-1 gap-10 px-6 text-center sm:grid-cols-3">
-          <Stat value={stats?.sacredTexts ? `${stats.sacredTexts}+` : "2,500+"} label="Sacred Texts" tone="text-indigo-900" />
-          <Stat value={stats?.traditions ? `${stats.traditions}+` : "15+"} label="Wisdom Traditions" tone="text-indigo-700" />
-          <Stat value={stats?.seekersConnected ? `${stats.seekersConnected}+` : "10K+"} label="Seekers Connected" tone="text-blue-500" />
+          <Stat value={stats?.sacredTexts ? `${stats.sacredTexts}+` : appConfig.homeStatFallbacks.sacredTexts} label="Sacred Texts" tone="text-indigo-900" />
+          <Stat value={stats?.traditions ? `${stats.traditions}+` : appConfig.homeStatFallbacks.traditions} label="Wisdom Traditions" tone="text-indigo-700" />
+          <Stat value={stats?.seekersConnected ? `${stats.seekersConnected}+` : appConfig.homeStatFallbacks.seekersConnected} label="Seekers Connected" tone="text-blue-500" />
         </div>
       </section>
 

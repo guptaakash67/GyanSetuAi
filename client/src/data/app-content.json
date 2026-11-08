@@ -1,0 +1,75 @@
+{
+  "navigation": {
+    "links": [
+      { "label": "Library", "to": "/library" },
+      { "label": "My Journey", "to": "/journey" }
+    ]
+  },
+  "home": {
+    "topicChips": ["Relationships", "Personal Growth", "Finding Purpose"],
+    "featureCards": [
+      {
+        "icon": "bolt",
+        "title": "Wisdom Guide",
+        "description": "Get personalized spiritual guidance based on your specific challenges and questions.",
+        "to": "/wisdom-guide"
+      },
+      {
+        "icon": "book",
+        "title": "Scripture Library",
+        "description": "Browse our comprehensive collection of spiritual texts and ancient wisdom.",
+        "to": "/library"
+      },
+      {
+        "icon": "compass",
+        "title": "My Journey",
+        "description": "Track your spiritual growth and revisit your most meaningful insights.",
+        "to": "/journey"
+      }
+    ],
+    "footerColumns": [
+      { "title": "Product", "links": ["Wisdom Guide", "Library", "My Journey"] },
+      { "title": "Resources", "links": ["Blog", "Guides", "FAQ"] },
+      { "title": "Community", "links": ["Discord", "Forum", "Events"] },
+      { "title": "Legal", "links": ["Privacy", "Terms", "Contact"] }
+    ]
+  },
+  "library": {
+    "traditionStyles": {
+      "hindu": { "gradient": "from-orange-700 to-rose-900", "emoji": "🕉️" },
+      "taoism": { "gradient": "from-emerald-700 to-teal-950", "emoji": "☯️" },
+      "buddhism": { "gradient": "from-amber-600 to-orange-800", "emoji": "🔔" },
+      "christian": { "gradient": "from-blue-700 to-indigo-950", "emoji": "📖" },
+      "islamic": { "gradient": "from-teal-700 to-emerald-950", "emoji": "☪️" },
+      "teshu": { "gradient": "from-sky-700 to-indigo-900", "emoji": "🌿" },
+      "default": { "gradient": "from-slate-700 to-stone-900", "emoji": "✨" }
+    },
+    "howToSteps": [
+      {
+        "step": 1,
+        "title": "Choose a tradition",
+        "description": "Start with a collection that feels familiar, or explore a perspective that is new to you."
+      },
+      {
+        "step": 2,
+        "title": "Find a text",
+        "description": "Browse the available scriptures and teachings in that collection."
+      },
+      {
+        "step": 3,
+        "title": "Bring your questions",
+        "description": "Open a text to explore its teachings and reflect on how they relate to your life."
+      }
+    ]
+  },
+  "wisdomTopics": [
+    "Relationships",
+    "Work & Career",
+    "Anxiety & Fear",
+    "Purpose & Meaning",
+    "Loss & Grief",
+    "Personal Growth",
+    "Confidence & Self-Worth",
+    "Decision Making"
+  ]
+}

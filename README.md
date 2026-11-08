@@ -60,12 +60,22 @@ GyanSetu/
 │   │   ├── ai/
 │   │   │   ├── ingest.py
 │   │   │   └── rag_pipeline.py
+│   │   ├── config.py
+│   │   ├── core/
+│   │   │   ├── database.py
+│   │   │   └── redis_client.py
+│   │   ├── main.py
 │   │   ├── models/
 │   │   │   └── models.py
 │   │   └── routes/
 │   │       ├── auth_routes.py
 │   │       ├── chat_routes.py
 │   │       └── journey_routes.py
+│   ├── data/
+│   │   ├── Library.json
+│   │   ├── runtime_config.json
+│   │   └── scriptures.json
+│   ├── .env
 │   ├── core/
 │   │   ├── database.py
 │   │   └── redis_client.py
@@ -84,6 +94,10 @@ GyanSetu/
 
 ## Current Architecture Notes
 
+- The FastAPI application, routes, models, and infrastructure live under the `server/app` package.
+- The application models are consolidated into a single model file: `server/app/models/models.py`.
+- Startup and imports are aligned with the real package layout.
+- AI defaults and application content are stored in JSON data files; credentials and deployment-specific values remain in environment variables.
 - The backend uses a single canonical `core` package for database and Redis utilities.
 - The application models are consolidated into a single model file: `server/app/models/models.py`.
 - Startup and imports are aligned with the real package layout.
@@ -124,11 +138,28 @@ SMTP_APP_PASSWORD=your-gmail-app-password
 DATABASE_URL=postgresql://... 
 REDIS_URL=rediss://...
 GROQ_API_KEY=your-groq-key
+GROQ_MODEL=openai/gpt-oss-20b
 GROQ_MODEL=llama-3.1-8b-instant
 PINECONE_API_KEY=your-pinecone-key
 PINECONE_INDEX=gyanSetu
 ```
 
+The server reads non-secret defaults from `server/data/runtime_config.json`.
+Keep credentials such as `JWT_SECRET`, `SMTP_APP_PASSWORD`, `GROQ_API_KEY`, and
+`PINECONE_API_KEY` in the ignored `.env` file, never in JSON or source code.
+
+Initialize the database tables:
+
+```bash
+python -c "import app.main; print('startup-ok')"
+```
+
+The RAG knowledge base includes the curated verses in `server/data/scriptures.json`
+and the scraped passages in `server/data/gyansetu_cleaned_v1.csv`. After changing
+either dataset, rebuild the Pinecone vectors from the `server` directory:
+
+```bash
+python -m app.ai.ingest
 Initialize the database tables:
 
 ```bash
@@ -138,12 +169,14 @@ python -c "import main; print('startup-ok')"
 Start the backend server:
 
 ```bash
+python -m uvicorn app.main:app --reload --port 8000
 python -m uvicorn main:app --reload --port 8000
 ```
 
 If running from the project root instead of the server folder:
 
 ```bash
+python -m uvicorn app.main:app --app-dir server --reload --port 8000
 python -m uvicorn main:app --app-dir server --reload --port 8000
 ```
 
@@ -186,6 +219,7 @@ Current implementation uses:
 - Pinecone vector search for scripture retrieval
 - Groq `ChatGroq` as the LLM layer for response generation
 - LangChain LCEL to orchestrate retrieval + prompting + generation
+- Curated and scraped scripture passages embedded into Pinecone as grounded answer context
 
 ---
 
@@ -221,6 +255,7 @@ Current implementation uses:
 
 ## Important Notes
 
+- The backend uses `server/app/main.py` as its ASGI entry point and keeps routes, models, and infrastructure in the `server/app` package.
 - The app is now using the cleaned project structure with a single `server/core` package and a single model file.
 - Groq and Pinecone must be configured with valid keys and resources tied to the same provider account.
 - If the backend fails at startup, check:

@@ -3,50 +3,50 @@
     {
       "id": "hindu",
       "slug": "hindu",
-      "name": "Bhagavad Gita",
+      "name": "Hindu Scriptures",
       "tradition": "Hindu",
-      "tagline": "Diverse philosophical and devotional paths rooted in the Vedas.",
+      "tagline": "Explore teachings on duty, purpose, self-knowledge, and the nature of the self.",
       "textCount": 5
     },
     {
       "id": "taoism",
       "slug": "taoism",
-      "name": "Tao Te Ching",
+      "name": "Taoist Classics",
       "tradition": "Taoism",
-      "tagline": "Ancient Chinese wisdom on the nature of reality, simplicity, and harmony.",
+      "tagline": "Explore teachings on simplicity, balance, and living in harmony with the natural way.",
       "textCount": 5
     },
     {
       "id": "buddhism",
       "slug": "buddhism",
-      "name": "Buddhist Sutras",
+      "name": "Buddhist Scriptures",
       "tradition": "Buddhism",
-      "tagline": "Teachings on mindfulness, compassion, and the path to enlightenment.",
+      "tagline": "Explore teachings on mindfulness, compassion, and the path toward awakening.",
       "textCount": 5
     },
     {
       "id": "christian",
       "slug": "christian",
-      "name": "Bible",
+      "name": "Christian Scriptures",
       "tradition": "Christian",
-      "tagline": "Sacred text containing wisdom, guidance, and spiritual principles.",
+      "tagline": "Explore teachings on faith, love, prayer, and practical wisdom.",
       "textCount": 5
     },
     {
       "id": "islamic",
       "slug": "islamic",
-      "name": "Quran",
+      "name": "Islamic Teachings",
       "tradition": "Islamic",
-      "tagline": "Divine revelation containing wisdom, law, and spiritual guidance.",
+      "tagline": "Explore the Quran, prophetic tradition, and Sufi reflections on faith and devotion.",
       "textCount": 5
     },
     {
-      "id": "hindu",
-      "slug": "hindu",
-      "name": "Upanishads",
-      "tradition": "Hindu",
-      "tagline": "A modern spiritual path emphasizing mindfulness, compassion, and self-discovery.",
-      "textCount": 1
+      "id": "teshu",
+      "slug": "teshu",
+      "name": "Teshu Collection",
+      "tradition": "Teshu",
+      "tagline": "Modern reflections on mindfulness, compassion, self-discovery, and balance.",
+      "textCount": 6
     }
   ],
   "texts": {

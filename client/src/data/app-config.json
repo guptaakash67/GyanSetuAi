@@ -1,0 +1,13 @@
+{
+  "apiBaseUrl": "http://localhost:8000",
+  "otpCountdownSeconds": 60,
+  "homeStatFallbacks": {
+    "sacredTexts": "2,500+",
+    "traditions": "15+",
+    "seekersConnected": "10K+"
+  },
+  "localStorageKeys": {
+    "token": "token",
+    "user": "user"
+  }
+}

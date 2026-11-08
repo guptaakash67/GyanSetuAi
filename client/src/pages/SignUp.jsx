@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authApi } from "../lib/api";
+import appConfig from "../data/app-config.json";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -15,14 +16,14 @@ export default function SignUp() {
   const [success, setSuccess] = useState("");
 
   // Countdown timer for resend
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(appConfig.otpCountdownSeconds);
   const [canResend, setCanResend] = useState(false);
 
   // Start countdown when OTP step begins
   useEffect(() => {
     if (step !== "otp") return;
 
-    setCountdown(60);
+    setCountdown(appConfig.otpCountdownSeconds);
     setCanResend(false);
 
     const timer = setInterval(() => {

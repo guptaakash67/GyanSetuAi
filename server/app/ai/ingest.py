@@ -1,156 +1,149 @@
 """
-Run this once to embed all scripture data into Pinecone.
+Embed the curated scripture JSON and scraped verse CSV into Pinecone.
 
-Usage:
-    python ingest.py
-
-This reads from scriptures.json and pushes embeddings to Pinecone.
+Run from the server directory with:
+    python -m app.ai.ingest
 """
 
+import csv
 import os
+from pathlib import Path
 
-import json
-from dotenv import load_dotenv
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from pinecone import Pinecone, ServerlessSpec
 
-load_dotenv()
-
+from app.config import DATA_DIR, RUNTIME_CONFIG, SCRIPTURES
+l
+AI_CONFIG = RUNTIME_CONFIG["ai"]
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_INDEX = os.getenv("PINECONE_INDEX", "tatva")
+PINECONE_INDEX = os.getenv("PINECONE_INDEX", AI_CONFIG["pinecone_index"])
+SCRAPED_DATA_PATH = DATA_DIR / AI_CONFIG["scraped_data_file"]
+SCRAPED_TRADITION = AI_CONFIG["scraped_data_tradition"]
 
-# ── Scripture data ────────────────────────────────────────────────────────────
-# Each entry: { id, title, tradition, source, category, verse, keyInsight }
-SCRIPTURES = [
-    # ── Hindu ────────────────────────────────────────────────────────────────
-    {
-        "id": "bg-2-47",
-        "title": "Bhagavad Gita 2.47",
-        "tradition": "hindu",
-        "source": "Bhagavad Gita",
-        "category": "Duty & Action",
-        "verse": "You have a right to perform your prescribed duty, but you are not entitled to the fruits of action. Never consider yourself the cause of the results of your activities, and never be attached to not doing your duty.",
-        "keyInsight": "Focus on your actions, not their outcomes. Perform your duty without attachment to results.",
-    },
-    {
-        "id": "bg-6-5",
-        "title": "Bhagavad Gita 6.5",
-        "tradition": "hindu",
-        "source": "Bhagavad Gita",
-        "category": "Self-Mastery",
-        "verse": "Let a man lift himself by his own self; let him not lower himself; for he himself is his friend, and he himself is his enemy.",
-        "keyInsight": "You are both your greatest ally and your worst enemy. Self-discipline is the path to self-mastery.",
-    },
-    {
-        "id": "upanishads-1",
-        "title": "Mandukya Upanishad 2",
-        "tradition": "hindu",
-        "source": "Upanishads",
-        "category": "Self-Knowledge",
-        "verse": "All this is Brahman. This Atman is Brahman. This same Atman has four quarters.",
-        "keyInsight": "The individual self (Atman) is identical with the universal consciousness (Brahman).",
-    },
-    {
-        "id": "ramayana-1",
-        "title": "Ramayana — Dharma",
-        "tradition": "hindu",
-        "source": "Ramayana",
-        "category": "Righteousness",
-        "verse": "One should never do that to another which one regards as injurious to one's own self. This, in brief, is the rule of righteousness.",
-        "keyInsight": "The golden rule of dharma — treat others as you wish to be treated.",
-    },
-    # ── Buddhism ─────────────────────────────────────────────────────────────
-    {
-        "id": "dhammapada-1",
-        "title": "Dhammapada 1",
-        "tradition": "buddhism",
-        "source": "Dhammapada",
-        "category": "Mind",
-        "verse": "Mind is the forerunner of all actions. All deeds are led by mind, created by mind. If one speaks or acts with a corrupt mind, suffering follows, as the wheel follows the hoof of an ox.",
-        "keyInsight": "Your thoughts shape your reality. Guard the mind carefully.",
-    },
-    {
-        "id": "dhammapada-183",
-        "title": "Dhammapada 183",
-        "tradition": "buddhism",
-        "source": "Dhammapada",
-        "category": "Enlightenment",
-        "verse": "Not to do any evil, to cultivate good, to purify one's mind — this is the teaching of the Buddhas.",
-        "keyInsight": "The entire Buddhist path in one verse: avoid harm, do good, purify the mind.",
-    },
-    {
-        "id": "heart-sutra-1",
-        "title": "Heart Sutra",
-        "tradition": "buddhism",
-        "source": "Heart Sutra",
-        "category": "Emptiness",
-        "verse": "Form is emptiness, emptiness is form. Emptiness is not different from form, form is not different from emptiness.",
-        "keyInsight": "All phenomena are empty of inherent existence — this insight liberates us from suffering.",
-    },
-    # ── Taoism ───────────────────────────────────────────────────────────────
-    {
-        "id": "tao-1",
-        "title": "Tao Te Ching Chapter 1",
-        "tradition": "taoism",
-        "source": "Tao Te Ching",
-        "category": "The Way",
-        "verse": "The Tao that can be told is not the eternal Tao. The name that can be named is not the eternal name. The nameless is the beginning of heaven and earth.",
-        "keyInsight": "The ultimate truth transcends words and concepts.",
-    },
-    {
-        "id": "tao-8",
-        "title": "Tao Te Ching Chapter 8",
-        "tradition": "taoism",
-        "source": "Tao Te Ching",
-        "category": "Harmony",
-        "verse": "The highest good is like water. Water gives life to the ten thousand things and does not strive. It flows in places men reject and so is like the Tao.",
-        "keyInsight": "Be like water — nourish without forcing, serve without seeking recognition.",
-    },
-    # ── Christian ────────────────────────────────────────────────────────────
-    {
-        "id": "matthew-5-3",
-        "title": "Matthew 5:3-5",
-        "tradition": "christian",
-        "source": "Gospel of Matthew",
-        "category": "Beatitudes",
-        "verse": "Blessed are the poor in spirit, for theirs is the kingdom of heaven. Blessed are those who mourn, for they will be comforted. Blessed are the meek, for they will inherit the earth.",
-        "keyInsight": "Humility, grief, and gentleness are not weaknesses — they are paths to divine grace.",
-    },
-    {
-        "id": "psalms-23",
-        "title": "Psalm 23",
-        "tradition": "christian",
-        "source": "Psalms",
-        "category": "Trust",
-        "verse": "The Lord is my shepherd; I shall not want. He makes me lie down in green pastures. He leads me beside still waters. He restores my soul.",
-        "keyInsight": "Divine guidance brings rest, restoration, and provision even in the darkest valleys.",
-    },
-    # ── Islamic ──────────────────────────────────────────────────────────────
-    {
-        "id": "quran-2-286",
-        "title": "Quran 2:286",
-        "tradition": "islamic",
-        "source": "Al-Baqarah",
-        "category": "Burden & Ease",
-        "verse": "Allah does not burden a soul beyond that it can bear. It will have the reward of that which it has earned, and it will bear the punishment of that which it has earned.",
-        "keyInsight": "You are never given more than you can handle. Every trial is within your capacity.",
-    },
-    {
-        "id": "quran-94-5",
-        "title": "Quran 94:5-6",
-        "tradition": "islamic",
-        "source": "Al-Inshirah",
-        "category": "Hope",
-        "verse": "For indeed, with hardship will be ease. Indeed, with hardship will be ease.",
-        "keyInsight": "Relief always accompanies difficulty — ease is promised twice for every hardship.",
-    },
-]
+REQUIRED_CSV_COLUMNS = {
+    "verse_id",
+    "scripture",
+    "book",
+    "verse_no",
+    "text",
+    "context_type",
+    "concept",
+    "primary_theme",
+    "secondary_theme",
+}
+
+
+def _clean_label(value: str) -> str:
+    value = value.strip()
+    return "" if value.casefold() == "none" else value
+
+
+def load_scraped_documents(csv_path: Path = SCRAPED_DATA_PATH) -> list[Document]:
+    documents: list[Document] = []
+
+    with csv_path.open(encoding="utf-8-sig", newline="") as csv_file:
+        reader = csv.DictReader(csv_file)
+        columns = set(reader.fieldnames or [])
+        missing_columns = REQUIRED_CSV_COLUMNS - columns
+        if missing_columns:
+            raise ValueError(
+                f"Scraped scripture CSV is missing columns: {', '.join(sorted(missing_columns))}"
+            )
+
+        seen_ids: set[str] = set()
+        for row_number, row in enumerate(reader, start=2):
+            verse_id = (row.get("verse_id") or "").strip()
+            scripture = (row.get("scripture") or "").strip()
+            verse_text = (row.get("text") or "").strip()
+            if not verse_id or not scripture or not verse_text:
+                raise ValueError(
+                    f"Scraped scripture CSV row {row_number} has an empty verse_id, scripture, or text."
+                )
+            if verse_id in seen_ids:
+                raise ValueError(
+                    f"Scraped scripture CSV contains duplicate verse_id {verse_id!r}."
+                )
+            seen_ids.add(verse_id)
+
+            book = _clean_label(row.get("book") or "")
+            verse_number = _clean_label(row.get("verse_no") or "")
+            context_type = _clean_label(row.get("context_type") or "")
+            concept = _clean_label(row.get("concept") or "")
+            primary_theme = _clean_label(row.get("primary_theme") or "")
+            secondary_theme = _clean_label(row.get("secondary_theme") or "")
+            reference = f"{scripture} {book}:{verse_number}".strip()
+            topics = [
+                topic
+                for topic in (concept, primary_theme, secondary_theme)
+                if topic
+            ]
+
+            content_parts = [
+                f"Scripture: {scripture}",
+                f"Reference: {reference}",
+            ]
+            if context_type:
+                content_parts.append(f"Context: {context_type}")
+            if topics:
+                content_parts.append(f"Concepts and themes: {', '.join(topics)}")
+            content_parts.extend(("", f"Verse: {verse_text}"))
+
+            documents.append(
+                Document(
+                    page_content="\n".join(content_parts),
+                    metadata={
+                        "id": verse_id,
+                        "title": reference,
+                        "tradition": SCRAPED_TRADITION,
+                        "source": scripture,
+                        "verse": verse_text,
+                        "category": primary_theme or concept or context_type,
+                        "context_type": context_type,
+                        "concept": concept,
+                        "primary_theme": primary_theme,
+                        "secondary_theme": secondary_theme,
+                    },
+                )
+            )
+
+    if not documents:
+        raise ValueError(f"No scripture verses found in {csv_path}.")
+    return documents
+
+
+def load_curated_documents() -> list[Document]:
+    documents = []
+    for scripture in SCRIPTURES:
+        text = f"{scripture['verse']}\n\nInsight: {scripture['keyInsight']}"
+        documents.append(
+            Document(
+                page_content=text,
+                metadata={
+                    "id": scripture["id"],
+                    "title": scripture["title"],
+                    "tradition": scripture["tradition"],
+                    "source": scripture["source"],
+                    "category": scripture["category"],
+                },
+            )
+        )
+    return documents
 
 
 def ingest():
-    print(f" Starting ingestion of {len(SCRIPTURES)} scriptures into Pinecone...")
+    if not PINECONE_API_KEY:
+        raise ValueError("PINECONE_API_KEY is not set in the server .env file.")
+
+    curated_documents = load_curated_documents()
+    scraped_documents = load_scraped_documents()
+    documents = curated_documents + scraped_documents
+    ids = [
+        *(f"curated-{document.metadata['id']}" for document in curated_documents),
+        *(f"scraped-{document.metadata['id']}" for document in scraped_documents),
+    ]
+    print(f"Starting ingestion of {len(documents)} scripture passages into Pinecone...")
 
     # Initialize Pinecone
     pc = Pinecone(api_key=PINECONE_API_KEY)
@@ -161,47 +154,30 @@ def ingest():
         print(f"Creating Pinecone index '{PINECONE_INDEX}'...")
         pc.create_index(
             name=PINECONE_INDEX,
-            dimension=384,  # all-MiniLM-L6-v2 dimension
-            metric="cosine",
-            spec=ServerlessSpec(cloud="aws", region="us-east-1")
+            dimension=AI_CONFIG["embedding_dimension"],
+            metric=AI_CONFIG["pinecone_metric"],
+            spec=ServerlessSpec(
+                cloud=AI_CONFIG["pinecone_cloud"],
+                region=AI_CONFIG["pinecone_region"],
+            ),
         )
-        print(f"✅ Index '{PINECONE_INDEX}' created")
+        print(f"Index '{PINECONE_INDEX}' created")
     else:
-        print(f"✅ Index '{PINECONE_INDEX}' already exists")
+        print(f"Index '{PINECONE_INDEX}' already exists")
 
     # Initialize embeddings
     print("Loading embedding model...")
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    embeddings = HuggingFaceEmbeddings(model_name=AI_CONFIG["embedding_model"])
 
-    # Convert scriptures to LangChain Documents
-    documents = []
-    for s in SCRIPTURES:
-        # Combine verse + keyInsight for richer embeddings
-        text = f"{s['verse']}\n\nInsight: {s['keyInsight']}"
-        doc = Document(
-            page_content=text,
-            metadata={
-                "id": s["id"],
-                "title": s["title"],
-                "tradition": s["tradition"],
-                "source": s["source"],
-                "category": s["category"],
-            }
-        )
-        documents.append(doc)
-
-    # Push to Pinecone
     print(f"Embedding and uploading {len(documents)} documents...")
-    PineconeVectorStore.from_documents(
-        documents=documents,
+    vector_store = PineconeVectorStore(
+        index=pc.Index(PINECONE_INDEX),
         embedding=embeddings,
-        index_name=PINECONE_INDEX,
-        pinecone_api_key=PINECONE_API_KEY,
+        text_key="text",
     )
+    vector_store.add_documents(documents=documents, ids=ids)
 
-    print(f"✅ Successfully ingested {len(documents)} scriptures into Pinecone!")
+    print(f"Successfully ingested {len(documents)} scripture passages into Pinecone!")
     print("You can now use the RAG pipeline for scripture search and chat.")
 
 

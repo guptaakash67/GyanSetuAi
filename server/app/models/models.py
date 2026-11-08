@@ -1,8 +1,10 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Integer, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID
-from core.database import Base
-from datetime import datetime
 import uuid
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+
+from app.core.database import Base
 
 
 class User(Base):

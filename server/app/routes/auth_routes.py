@@ -7,8 +7,7 @@ Auth routes:
 """
 
 import os
-import random
-import string
+import secrets
 import smtplib
 
 from datetime import datetime, timedelta
@@ -23,9 +22,10 @@ from sqlalchemy.orm import Session
 import jwt
 import bcrypt
 
-from core.database import get_db
+from app.config import RUNTIME_CONFIG
+from app.core.database import get_db
 from app.models.models import User, Milestone
-from core.redis_client import redis_client
+from app.core.redis_client import redis_client
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -34,15 +34,16 @@ security = HTTPBearer()
 
 # ── Config ───────────────────────────────────────────────────────────────────
 
-JWT_SECRET = "6a76f0cfa0e26e4185a036a69f6bfa56bb9103a656a334a1334ae6bca90dcede"
-JWT_EXPIRE_DAYS = 7
-
-OTP_EXPIRE_SECONDS = 60
-
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 587
-SMTP_EMAIL = "noreplygyansetu@gmail.com"
-SMTP_PASSWORD = "lxux kdnc aowh eulv"
+AUTH_CONFIG = RUNTIME_CONFIG["auth"]
+JWT_SECRET = os.getenv("JWT_SECRET")
+JWT_EXPIRE_DAYS = AUTH_CONFIG["jwt_expire_days"]
+JWT_ALGORITHM = AUTH_CONFIG["jwt_algorithm"]
+OTP_EXPIRE_SECONDS = AUTH_CONFIG["otp_expire_seconds"]
+OTP_LENGTH = AUTH_CONFIG["otp_length"]
+SMTP_HOST = AUTH_CONFIG["smtp_host"]
+SMTP_PORT = AUTH_CONFIG["smtp_port"]
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
+SMTP_PASSWORD = os.getenv("SMTP_APP_PASSWORD")
 
 
 # ── Schemas ──────────────────────────────────────────────────────────────────
@@ -65,8 +66,8 @@ class SigninRequest(BaseModel):
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-def generate_otp(length=6):
-    return "".join(random.choices(string.digits, k=length))
+def generate_otp(length=OTP_LENGTH):
+    return "".join(secrets.choice("0123456789") for _ in range(length))
 
 
 def store_otp(email: str, otp: str):
@@ -79,8 +80,6 @@ def store_otp(email: str, otp: str):
         OTP_EXPIRE_SECONDS,
         otp
     )
-
-    print(f"OTP stored in Redis for {email}: {otp}")
 
 
 def get_otp(email: str):
@@ -166,6 +165,8 @@ def send_otp_email(to_email: str, otp: str, name: str):
 
 
 def create_jwt(email: str, name: str):
+    if not JWT_SECRET:
+        raise HTTPException(status_code=500, detail="JWT service is not configured.")
 
     payload = {
         "email": email,
@@ -177,18 +178,20 @@ def create_jwt(email: str, name: str):
     return jwt.encode(
         payload,
         JWT_SECRET,
-        algorithm="HS256"
+        algorithm=JWT_ALGORITHM,
     )
 
 
 def decode_jwt(token: str):
+    if not JWT_SECRET:
+        raise HTTPException(status_code=500, detail="JWT service is not configured.")
 
     try:
 
         return jwt.decode(
             token,
             JWT_SECRET,
-            algorithms=["HS256"]
+            algorithms=[JWT_ALGORITHM],
         )
 
     except jwt.ExpiredSignatureError:
@@ -213,26 +216,6 @@ def get_current_user(
     return decode_jwt(credentials.credentials)
 
 
-# ── Debug ────────────────────────────────────────────────────────────────────
-
-@router.get("/debug")
-def debug(db: Session = Depends(get_db)):
-
-    users = db.query(User).all()
-
-    keys = redis_client.keys("otp:*")
-
-    otp_store = {
-        k.replace("otp:", ""): redis_client.get(k)
-        for k in keys
-    }
-
-    return {
-        "otp_store": otp_store,
-        "users": [u.email for u in users]
-    }
-
-
 # ── Signup ───────────────────────────────────────────────────────────────────
 
 @router.post("/signup")
@@ -240,9 +223,6 @@ def signup(
     body: SignupRequest,
     db: Session = Depends(get_db)
 ):
-
-    print("========== SIGNUP ==========")
-    print(body)
 
     email = body.email.lower()
 
@@ -264,8 +244,6 @@ def signup(
         body.password.encode(),
         bcrypt.gensalt()
     ).decode()
-
-    print("Password hashed")
 
     if existing:
 
@@ -289,31 +267,13 @@ def signup(
     # Generate OTP
     otp = generate_otp()
 
-    print("Generated OTP:", otp)
-
     # Store OTP in Redis
     store_otp(
         email,
         otp
     )
 
-    try:
-
-        print("Sending email...")
-
-        send_otp_email(
-            email,
-            otp,
-            body.name
-        )
-
-        print("Email sent successfully")
-
-    except Exception as e:
-
-        print("EMAIL ERROR:", str(e))
-
-        raise
+    send_otp_email(email, otp, body.name)
 
     return {
         "message": "OTP sent successfully"
@@ -396,13 +356,6 @@ def verify_otp(
         email,
         user.name
     )
-
-    print("===== DEBUG =====")
-    print("Email:", email)
-    print("Name:", user.name)
-    print("Token:", token)
-    print("Milestone: Joined GyanSetu")
-    print("=================")
 
     return {
         "token": token,

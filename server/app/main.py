@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
+import os
 from collections.abc import AsyncIterator
 
 from fastapi import FastAPI, HTTPException
@@ -17,6 +18,15 @@ logger = logging.getLogger(__name__)
 TRADITIONS = LIBRARY_DATA.get("traditions", [])
 TRADITION_TEXTS = LIBRARY_DATA.get("texts", {})
 APP_CONFIG = RUNTIME_CONFIG["app"]
+configured_origins = os.getenv("CORS_ORIGINS")
+if configured_origins:
+    cors_origins = [
+        origin.strip().rstrip("/")
+        for origin in configured_origins.split(",")
+        if origin.strip()
+    ]
+else:
+    cors_origins = APP_CONFIG["cors_origins"]
 
 
 @asynccontextmanager
@@ -35,8 +45,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    
-    allow_origins=APP_CONFIG["cors_origins"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

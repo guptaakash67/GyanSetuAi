@@ -76,6 +76,13 @@ GyanSetu/
 │   │   ├── runtime_config.json
 │   │   └── scriptures.json
 │   ├── .env
+│   ├── core/
+│   │   ├── database.py
+│   │   └── redis_client.py
+│   ├── data/
+│   │   └── Library.json
+│   ├── .env
+│   ├── main.py
 │   ├── requirements.txt
 │   └── venv/
 ├── .gitignore
@@ -91,6 +98,10 @@ GyanSetu/
 - The application models are consolidated into a single model file: `server/app/models/models.py`.
 - Startup and imports are aligned with the real package layout.
 - AI defaults and application content are stored in JSON data files; credentials and deployment-specific values remain in environment variables.
+- The backend uses a single canonical `core` package for database and Redis utilities.
+- The application models are consolidated into a single model file: `server/app/models/models.py`.
+- Startup and imports are aligned with the real package layout.
+- AI functionality is configured through environment variables, not hardcoded values.
 
 ---
 
@@ -144,6 +155,7 @@ DATABASE_URL=postgresql://...
 REDIS_URL=rediss://...
 GROQ_API_KEY=your-groq-key
 GROQ_MODEL=openai/gpt-oss-20b
+GROQ_MODEL=llama-3.1-8b-instant
 PINECONE_API_KEY=your-pinecone-key
 PINECONE_INDEX=gyanSetu
 ```
@@ -164,18 +176,24 @@ either dataset, rebuild the Pinecone vectors from the `server` directory:
 
 ```bash
 python -m app.ai.ingest
+Initialize the database tables:
+
+```bash
+python -c "import main; print('startup-ok')"
 ```
 
 Start the backend server:
 
 ```bash
 python -m uvicorn app.main:app --reload --port 8000
+python -m uvicorn main:app --reload --port 8000
 ```
 
 If running from the project root instead of the server folder:
 
 ```bash
 python -m uvicorn app.main:app --app-dir server --reload --port 8000
+python -m uvicorn main:app --app-dir server --reload --port 8000
 ```
 
 ### Frontend
@@ -254,6 +272,7 @@ Current implementation uses:
 ## Important Notes
 
 - The backend uses `server/app/main.py` as its ASGI entry point and keeps routes, models, and infrastructure in the `server/app` package.
+- The app is now using the cleaned project structure with a single `server/core` package and a single model file.
 - Groq and Pinecone must be configured with valid keys and resources tied to the same provider account.
 - If the backend fails at startup, check:
   1. the Python environment

@@ -4,6 +4,9 @@ services:
     region: singapore
     plan: free
     maxmemoryPolicy: noeviction
+    ipAllowList:
+      - source: 0.0.0.0/32
+        description: Block external access; the API uses the private network.
 
   - type: web
     name: gyansetu-api

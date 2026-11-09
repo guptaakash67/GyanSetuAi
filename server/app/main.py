@@ -43,14 +43,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(journey_router)
@@ -104,3 +96,12 @@ def get_tradition_texts(slug: str):
     if tradition is None:
         raise HTTPException(status_code=404, detail=f"Tradition '{slug}' not found")
     return TRADITION_TEXTS.get(slug, [])
+
+
+app = CORSMiddleware(
+    app=app,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

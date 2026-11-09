@@ -14,7 +14,6 @@ if not REDIS_URL:
 redis_client = redis.from_url(
     REDIS_URL,
     decode_responses=True,
-    ssl_cert_reqs=None,
 )
 
 

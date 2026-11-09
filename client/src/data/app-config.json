@@ -1,5 +1,5 @@
 {
-  "apiBaseUrl": "https://gyansetu-api-qa0x.onrender.com",
+  "apiBaseUrl": "https://gyansetu-api.vercel.app",
   "otpCountdownSeconds": 60,
   "homeStatFallbacks": {
     "sacredTexts": "2,500+",

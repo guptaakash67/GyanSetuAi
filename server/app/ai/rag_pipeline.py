@@ -1,12 +1,5 @@
 import os
 
-from langchain_groq import ChatGroq
-from langchain_pinecone import PineconeVectorStore
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from pinecone import Pinecone
-
 from app.config import RUNTIME_CONFIG
 
 AI_CONFIG = RUNTIME_CONFIG["ai"]
@@ -33,14 +26,27 @@ def validate_runtime_config():
 
 
 def get_embeddings():
-    global _embeddings  
+    global _embeddings
     if _embeddings is None:
-        _embeddings = HuggingFaceEmbeddings(model_name=AI_CONFIG["embedding_model"])
+        from langchain_huggingface import HuggingFaceEmbeddings
+
+        model_cache = os.getenv("HF_HOME", "/tmp/huggingface")
+        _embeddings = HuggingFaceEmbeddings(
+            model_name=AI_CONFIG["embedding_model"],
+            cache_folder=model_cache,
+        )
     return _embeddings
+
+
+def get_local_embeddings():
+    return get_embeddings()
 
 
 def get_vector_store():
     global _vector_store
+    from langchain_pinecone import PineconeVectorStore
+    from pinecone import Pinecone
+
     missing = validate_runtime_config()
     if "PINECONE_API_KEY" in missing or "PINECONE_INDEX" in missing:
         raise ValueError(
@@ -61,6 +67,8 @@ def get_llm():
     if not GROQ_API_KEY:
         raise ValueError("Groq is not configured. Set GROQ_API_KEY in the server .env file.")
     if _llm is None:
+        from langchain_groq import ChatGroq
+
         _llm = ChatGroq(
             api_key=GROQ_API_KEY,
             model_name=GROQ_MODEL,
@@ -69,17 +77,14 @@ def get_llm():
         )
     return _llm
 
-prompt = PromptTemplate(
-    template=AI_CONFIG["prompt_template"],
-    input_variables=["context", "question"],
-)
-
-
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
 def ask_wisdom(question: str, tradition: str = None):
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import PromptTemplate
+
     retriever = get_vector_store().as_retriever(
         search_type="similarity",
         search_kwargs={
@@ -88,6 +93,10 @@ def ask_wisdom(question: str, tradition: str = None):
         },
     )
     docs = retriever.invoke(question)
+    prompt = PromptTemplate(
+        template=AI_CONFIG["prompt_template"],
+        input_variables=["context", "question"],
+    )
     answer_chain = prompt | get_llm() | StrOutputParser()
     answer = answer_chain.invoke(
         {"context": format_docs(docs), "question": question}

@@ -1,0 +1,6 @@
+.env
+venv/
+.venv/
+__pycache__/
+data/gyansetu_cleaned_v1.csv
+requirements-render.txt

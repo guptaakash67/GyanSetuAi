@@ -14,7 +14,7 @@ services:
     region: singapore
     plan: free
     rootDir: server
-    buildCommand: python -m pip install -r requirements.txt
+    buildCommand: python -m pip install -r requirements-render.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /
     envVars:

@@ -135,6 +135,32 @@ After deploying the frontend, update the backend's `CORS_ORIGINS` environment va
 in Render to the exact frontend origin (for example, `https://your-app.vercel.app`).
 Separate multiple origins with commas. The API health check is available at `/`.
 
+### Vercel Backend
+
+The FastAPI application can be deployed as a separate Vercel project. Set the project
+Root Directory to `server`; Vercel detects `app/main.py` and installs `requirements.txt`.
+The production API is `https://gyansetu-api.vercel.app`. The full embedding stack runs
+inside a Vercel large function enabled with `VERCEL_SUPPORT_LARGE_FUNCTIONS=1`.
+Keep the former API available temporarily as a rollback until the frontend is confirmed
+to work with Vercel.
+
+The Vercel project needs `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `CORS_ORIGINS`,
+`GROQ_API_KEY`, `PINECONE_API_KEY`, `PINECONE_INDEX`, `SMTP_EMAIL`,
+`SMTP_APP_PASSWORD`, and `HF_HOME=/tmp/huggingface` (optional; this is the default).
+PostgreSQL and Redis must be
+externally reachable managed services; use the new Neon and Upstash URLs, not Render
+service URLs. Migrate existing PostgreSQL data before switching traffic.
+
+The existing `sentence-transformers/all-MiniLM-L6-v2` model and Pinecone vectors are
+preserved. The model loads lazily on Vercel and is cached in `/tmp` while a function
+instance remains warm. Large-function availability, build size, cold starts, and
+runtime cost depend on the Vercel project and plan; validate these before cutover.
+
+The frontend's default API URL is set in `client/src/data/app-config.json`; set
+`VITE_API_URL=https://gyansetu-api.vercel.app` in the frontend Vercel project's
+production environment as well. Local `.env` files are excluded from deployments.
+SMTP delivery has been verified with an approved test signup address.
+
 ### Backend
 
 ```bash
@@ -142,7 +168,7 @@ cd server
 python -m venv venv
 venv\Scripts\activate      # Windows
 # or: source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-render.txt
 ```
 
 Create `server/.env` with values like:

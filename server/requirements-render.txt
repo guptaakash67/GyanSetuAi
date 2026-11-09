@@ -1,0 +1,2 @@
+# Compatibility alias for existing Render and ingestion commands.
+-r requirements.txt

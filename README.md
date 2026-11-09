@@ -119,6 +119,22 @@ GyanSetu/
 
 ## Setup
 
+### Test Deployment (Render)
+
+The root `render.yaml` defines a test deployment for the FastAPI backend, with
+Render-managed PostgreSQL and Key Value services. In Render, create a new Blueprint
+from this GitHub repository and provide `GROQ_API_KEY`, `PINECONE_API_KEY`,
+`SMTP_EMAIL`, and `SMTP_APP_PASSWORD` when prompted. Render generates `JWT_SECRET`
+and connects the database and Redis-compatible Key Value service automatically.
+
+The Blueprint uses Render's free plans for testing. Free web services can sleep when
+idle, free Key Value has limited capacity, and free PostgreSQL expires after 30 days;
+do not use these plans for production or persistent user data.
+
+After deploying the frontend, update the backend's `CORS_ORIGINS` environment variable
+in Render to the exact frontend origin (for example, `https://your-app.vercel.app`).
+Separate multiple origins with commas. The API health check is available at `/`.
+
 ### Backend
 
 ```bash

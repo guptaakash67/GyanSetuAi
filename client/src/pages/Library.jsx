@@ -59,7 +59,7 @@ function TraditionGrid() {
     <div className="min-h-screen bg-[#f7f6f2]">
       <BackBar />
 
-      <main className="mx-auto max-w-7xl px-5 pb-20 pt-8 sm:px-8">
+      <main className="mx-auto max-w-7xl px-6 pb-20 pt-8 sm:px-8">
         <section className="relative isolate overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#192b2a] via-[#223a36] to-[#493a2d] px-6 py-12 text-white shadow-xl shadow-slate-900/10 sm:px-12 sm:py-16">
           <div className="pointer-events-none absolute -right-20 -top-32 -z-10 h-96 w-96 rounded-full border border-white/10" />
           <div className="pointer-events-none absolute -right-8 -top-20 -z-10 h-72 w-72 rounded-full border border-white/10" />

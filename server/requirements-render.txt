@@ -1,0 +1,50 @@
+# Full local embedding stack for Render and scripture ingestion.
+fastapi==0.141.1
+uvicorn==0.52.0
+python-multipart==0.0.32
+starlette==1.3.1
+
+# Database
+sqlalchemy==2.0.51
+psycopg2-binary==2.9.12
+
+# Auth
+pyjwt==2.13.0
+bcrypt==5.0.0
+python-dotenv==1.2.2
+email-validator==2.3.0
+
+# Redis
+redis==8.0.1
+
+# LangChain + RAG
+langchain==1.3.15
+langchain-core==1.5.5
+langchain-groq==1.1.3
+langchain-huggingface==1.2.2
+langchain-pinecone==0.2.13
+langchain-community==0.4.2
+langchain-text-splitters==1.1.2
+langgraph==1.2.11
+huggingface_hub==1.27.0
+
+# LLM + local embeddings
+groq==0.37.1
+sentence-transformers==5.7.0
+transformers==5.15.0
+torch==2.13.0
+tokenizers==0.22.2
+
+# Pinecone
+pinecone==7.3.0
+
+# HTTP
+httpx==0.28.1
+requests==2.34.2
+
+# Utilities
+pydantic==2.13.0
+pydantic-settings==2.15.0
+tenacity==9.1.4
+tqdm==4.70.0
+numpy==2.5.2

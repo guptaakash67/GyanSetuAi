@@ -11,6 +11,7 @@ from app.core.database import init_db
 from app.core.redis_client import test_connection
 from app.routes.auth_routes import router as auth_router
 from app.routes.chat_routes import router as chat_router
+from app.routes.embedding_routes import router as embedding_router
 from app.routes.journey_routes import router as journey_router
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ app = FastAPI(
 
 app.include_router(auth_router)
 app.include_router(chat_router)
+app.include_router(embedding_router)
 app.include_router(journey_router)
 
 

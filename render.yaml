@@ -14,7 +14,7 @@ services:
     region: singapore
     plan: free
     rootDir: server
-    buildCommand: python -m pip install -r requirements.txt
+    buildCommand: python -m pip install -r requirements-render.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /
     envVars:
@@ -33,6 +33,10 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         value: https://gyansetuai-delta.vercel.app,http://localhost:3000,http://localhost:5173
+      - key: EMBEDDING_PROVIDER
+        value: local
+      - key: EMBEDDING_SERVICE_TOKEN
+        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: PINECONE_API_KEY

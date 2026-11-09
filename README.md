@@ -135,6 +135,35 @@ After deploying the frontend, update the backend's `CORS_ORIGINS` environment va
 in Render to the exact frontend origin (for example, `https://your-app.vercel.app`).
 Separate multiple origins with commas. The API health check is available at `/`.
 
+### Vercel Backend (Preview)
+
+The FastAPI application can be deployed as a separate Vercel project. Set the project
+Root Directory to `server`; Vercel detects `app/main.py` and installs the lightweight
+`requirements.txt`. Keep the Render API active until the Vercel deployment and its
+database, Redis, email, and AI integrations have all been verified.
+
+The Vercel project needs `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `CORS_ORIGINS`,
+`GROQ_API_KEY`, `PINECONE_API_KEY`, `PINECONE_INDEX`, `SMTP_EMAIL`,
+`SMTP_APP_PASSWORD`, `EMBEDDING_PROVIDER=render`, `EMBEDDING_SERVICE_URL`, and
+`EMBEDDING_SERVICE_TOKEN`. Use an externally reachable PostgreSQL and Redis service;
+Render's private service URLs do not work from Vercel. The Render database's external
+URL can preserve the existing data; Redis needs a Vercel-reachable managed endpoint.
+
+The Render API keeps the existing local `sentence-transformers/all-MiniLM-L6-v2`
+model and exposes a token-protected `/internal/embeddings` route for the Vercel API.
+Set the same randomly generated `EMBEDDING_SERVICE_TOKEN` in Render and Vercel. This
+preserves the current Pinecone embedding model and index; the Render service must stay
+running for Vercel chat and search.
+
+On Render, set `EMBEDDING_PROVIDER=local` and add `EMBEDDING_SERVICE_TOKEN` as a
+secret. On Vercel, set `EMBEDDING_PROVIDER=render`,
+`EMBEDDING_SERVICE_URL=https://gyansetu-api-qa0x.onrender.com`, and the same token.
+
+The Vercel API URL is not set here yet. After deployment succeeds, set `VITE_API_URL`
+in the frontend Vercel project's environment and redeploy the frontend. The existing
+Gmail SMTP configuration is unchanged; verify signup after deployment, since moving
+the API does not itself fix email-provider or network failures.
+
 ### Backend
 
 ```bash
@@ -142,7 +171,7 @@ cd server
 python -m venv venv
 venv\Scripts\activate      # Windows
 # or: source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-render.txt
 ```
 
 Create `server/.env` with values like:
@@ -231,7 +260,8 @@ User question
 ```
 
 Current implementation uses:
-- `sentence-transformers/all-MiniLM-L6-v2` for embeddings
+- `sentence-transformers/all-MiniLM-L6-v2` locally on Render; the Vercel API can call
+  the protected Render embedding route
 - Pinecone vector search for scripture retrieval
 - Groq `ChatGroq` as the LLM layer for response generation
 - LangChain LCEL to orchestrate retrieval + prompting + generation

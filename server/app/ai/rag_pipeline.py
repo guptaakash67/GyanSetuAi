@@ -2,12 +2,12 @@ import os
 
 from langchain_groq import ChatGroq
 from langchain_pinecone import PineconeVectorStore
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from pinecone import Pinecone
 
 from app.config import RUNTIME_CONFIG
+from app.ai.remote_embeddings import RenderEmbeddingService
 
 AI_CONFIG = RUNTIME_CONFIG["ai"]
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -19,6 +19,7 @@ PINECONE_INDEX = os.getenv("PINECONE_INDEX", AI_CONFIG["pinecone_index"])
 _embeddings = None
 _vector_store = None
 _llm = None
+_local_embeddings = None
 
 
 def validate_runtime_config():
@@ -35,8 +36,38 @@ def validate_runtime_config():
 def get_embeddings():
     global _embeddings  
     if _embeddings is None:
-        _embeddings = HuggingFaceEmbeddings(model_name=AI_CONFIG["embedding_model"])
+        provider = os.getenv("EMBEDDING_PROVIDER", "local").strip().lower()
+        if provider == "local":
+            _embeddings = get_local_embeddings()
+        elif provider == "render":
+            service_url = os.getenv("EMBEDDING_SERVICE_URL")
+            token = os.getenv("EMBEDDING_SERVICE_TOKEN")
+            if not service_url or not token:
+                raise ValueError(
+                    "Render embeddings require EMBEDDING_SERVICE_URL and "
+                    "EMBEDDING_SERVICE_TOKEN."
+                )
+            _embeddings = RenderEmbeddingService(
+                service_url=service_url,
+                token=token,
+                expected_dimension=AI_CONFIG["embedding_dimension"],
+            )
+        else:
+            raise ValueError(
+                "EMBEDDING_PROVIDER must be 'local' or 'render'."
+            )
     return _embeddings
+
+
+def get_local_embeddings():
+    global _local_embeddings
+    if _local_embeddings is None:
+        from langchain_huggingface import HuggingFaceEmbeddings
+
+        _local_embeddings = HuggingFaceEmbeddings(
+            model_name=AI_CONFIG["embedding_model"]
+        )
+    return _local_embeddings
 
 
 def get_vector_store():

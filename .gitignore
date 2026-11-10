@@ -25,3 +25,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Render deployment configuration
+/render.yaml

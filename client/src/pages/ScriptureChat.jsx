@@ -128,6 +128,7 @@ function ScriptureChatView({
           role: "assistant",
           content: res.data.content,
           sources: res.data.sources,
+          insightSaved: res.data.insightSaved,
         },
       ]);
     } catch {
@@ -306,6 +307,12 @@ function ChatBubble({ message }) {
         }`}>
           {message.content}
         </div>
+
+        {message.insightSaved && (
+          <p className="px-1 text-xs font-medium text-emerald-800">
+            Saved to My Journey
+          </p>
+        )}
 
         {/* Source citations */}
         {message.sources && message.sources.length > 0 && (

@@ -61,4 +61,7 @@ export const journeyApi = {
   getSummary: () => api.get("/journey/summary"),
   getMilestones: () => api.get("/journey/milestones"),
   getInsights: () => api.get("/journey/insights"),
+  updateNote: (insightId, note) =>
+    api.patch(`/journey/insights/${insightId}/note`, { note }),
+  deleteInsight: (insightId) => api.delete(`/journey/insights/${insightId}`),
 };

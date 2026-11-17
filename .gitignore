@@ -28,3 +28,4 @@ Thumbs.db
 
 # Render deployment configuration
 /render.yaml
+.vercel

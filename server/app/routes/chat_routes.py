@@ -11,7 +11,10 @@ from pydantic import BaseModel
 from typing import Optional
 from app.config import SCRIPTURES, RUNTIME_CONFIG
 from app.ai.rag_pipeline import ask_wisdom, search_scriptures
+from app.core.database import get_db
 from app.routes.auth_routes import get_current_user
+from app.models.models import ChatLog, Insight, Milestone
+from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["chat & wisdom"])
 security = HTTPBearer(auto_error=False)
@@ -27,6 +30,69 @@ class WisdomSearchRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     tradition: Optional[str] = None
+
+
+def _persist_chat_and_insight(
+    db: Session,
+    email: str,
+    tradition: str,
+    message: str,
+    answer: str,
+    sources: list[dict],
+) -> None:
+    source_titles = [
+        source["title"]
+        for source in sources
+        if isinstance(source, dict) and source.get("title")
+    ]
+    source_label = ", ".join(source_titles) or f"{tradition.title()} scriptures"
+    insight_title = source_titles[0] if source_titles else f"{tradition.title()} reflection"
+
+    db.add_all([
+        ChatLog(user_email=email, tradition=tradition, message=message),
+        Insight(
+            user_email=email,
+            source=source_label,
+            title=insight_title,
+            quote=answer,
+            tradition=tradition,
+        ),
+    ])
+
+    try:
+        db.flush()
+        chat_count = db.query(ChatLog).filter(ChatLog.user_email == email).count()
+        insight_count = db.query(Insight).filter(Insight.user_email == email).count()
+        milestone_labels = []
+        if chat_count:
+            milestone_labels.append("First Chat")
+        if chat_count >= 10:
+            milestone_labels.append("10 Chats Completed")
+        if insight_count:
+            milestone_labels.append("First Insight Saved")
+        if insight_count >= 10:
+            milestone_labels.append("10 Insights Saved")
+        if insight_count >= 25:
+            milestone_labels.append("25 Insights Saved")
+
+        existing_labels = {
+            milestone.label
+            for milestone in db.query(Milestone)
+            .filter(
+                Milestone.user_email == email,
+                Milestone.label.in_(milestone_labels),
+            )
+            .all()
+        }
+        db.add_all(
+            Milestone(user_email=email, label=label)
+            for label in milestone_labels
+            if label not in existing_labels
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -58,6 +124,7 @@ def chat_with_tradition(
     tradition: str,
     body: ChatRequest,
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ):
     """
     RAG chat about a specific tradition (e.g. /chat/hindu).
@@ -66,7 +133,7 @@ def chat_with_tradition(
     if credentials is None:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    get_current_user(credentials)  # validate JWT
+    user = get_current_user(credentials)
 
     if tradition not in VALID_TRADITIONS:
         raise HTTPException(
@@ -82,14 +149,24 @@ def chat_with_tradition(
             question=body.message,
             tradition=tradition
         )
+        _persist_chat_and_insight(
+            db=db,
+            email=user["email"],
+            tradition=tradition,
+            message=body.message,
+            answer=result["answer"],
+            sources=result["sources"],
+        )
         return {
             "role": "assistant",
             "content": result["answer"],
             "sources": result["sources"],
+            "insightSaved": True,
         }
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
+        db.rollback()
         print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="Chat failed. Please try again.")
 
@@ -99,6 +176,7 @@ def chat_with_scripture(
     scripture_id: str,
     body: ChatRequest,
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ):
     """
     RAG chat about a specific scripture (e.g. /chat/scripture/bg-2-47).
@@ -107,7 +185,7 @@ def chat_with_scripture(
     if credentials is None:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    get_current_user(credentials)  # validate JWT
+    user = get_current_user(credentials)
 
     if not body.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
@@ -119,13 +197,23 @@ def chat_with_scripture(
             question=body.message,
             tradition=tradition
         )
+        _persist_chat_and_insight(
+            db=db,
+            email=user["email"],
+            tradition=tradition or "general",
+            message=body.message,
+            answer=result["answer"],
+            sources=result["sources"],
+        )
         return {
             "role": "assistant",
             "content": result["answer"],
             "sources": result["sources"],
+            "insightSaved": True,
         }
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
+        db.rollback()
         print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="Chat failed. Please try again.")

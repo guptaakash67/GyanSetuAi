@@ -18,6 +18,7 @@ Wisdom and chat
 POST /wisdom/search — JSON: {"query":"How can I handle stress?","tradition":"hindu"}
 POST /chat/{tradition} — e.g. /chat/hindu; JSON: {"message":"How can I handle stress?"}
 POST /chat/scripture/{scripture_id} — e.g. /chat/scripture/bg-2-47; JSON: {"message":"What does this teach?","tradition":"hindu"}
+After an authenticated chat succeeds, the user's message is saved to chat logs and the assistant's answer is saved as an insight in My Journey.
 Journey
 
 GET /journey/summary

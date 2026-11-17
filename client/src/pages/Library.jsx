@@ -1,28 +1,21 @@
-import { useState, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import BackBar from "../components/BackBar";
-import { SearchIcon, BookOpenIcon } from "../components/Icons";
+import { BookOpenIcon, SearchIcon } from "../components/Icons";
 import { useFetch } from "../hooks/useFetch";
 import { libraryApi } from "../lib/api";
 import appContent from "../data/app-content.json";
 
-const { traditionStyles: TRADITION_STYLES, howToSteps: HOW_TO_STEPS } = appContent.library;
+const { traditionStyles: TRADITION_STYLES, howToSteps: HOW_TO_STEPS } =
+  appContent.library;
 
 export default function Library() {
-  const { slug } = useParams();
-
-  // /library -> grid of all traditions
-  // /library/:slug -> texts list for one tradition (e.g. /library/hindu)
-  return slug ? <TraditionTexts slug={slug} /> : <TraditionGrid />;
-}
-
-// ---- /library ----------------------------------------------------------
-
-function TraditionGrid() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-
-  const { data: traditions, loading } = useFetch(() => libraryApi.getTraditions(), []);
+  const { data: traditions, loading, error, refetch } = useFetch(
+    () => libraryApi.getTraditions(),
+    []
+  );
 
   const collections = useMemo(() => {
     const grouped = new Map();
@@ -44,14 +37,17 @@ function TraditionGrid() {
   }, [traditions]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return collections;
-    const q = query.toLowerCase();
-    return collections.filter(
-      (collection) =>
-        collection.name.toLowerCase().includes(q) ||
-        collection.tradition?.toLowerCase().includes(q) ||
-        collection.tagline?.toLowerCase().includes(q) ||
-        collection.textTitles.some((title) => title.toLowerCase().includes(q))
+    const search = query.trim().toLowerCase();
+    if (!search) return collections;
+    return collections.filter((collection) =>
+      [
+        collection.name,
+        collection.tradition,
+        collection.tagline,
+        ...collection.textTitles,
+      ]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(search))
     );
   }, [collections, query]);
 
@@ -67,16 +63,18 @@ function TraditionGrid() {
 
           <div className="relative max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-100/20 bg-amber-100/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-amber-100">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-200" />
-              A bridge to timeless wisdom
+              Scripture library
             </span>
             <h1 className="mt-6 max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
-              Wisdom for real life
-              <span className="block font-serif italic text-amber-200">and all its questions.</span>
+              Find wisdom
+              <span className="block font-serif italic text-amber-200">
+                for life’s questions.
+              </span>
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
-              Facing a hard choice, looking for calm, or trying to understand yourself? Explore
-              teachings from different traditions and reflect at your own pace.
+              Choose a tradition, ask a question, and explore answers grounded
+              in its scriptures. You can start chatting without choosing a book
+              first.
             </p>
 
             <label className="mt-8 flex max-w-xl items-center gap-3 rounded-2xl border border-white/10 bg-white px-4 py-3.5 text-slate-400 shadow-lg shadow-black/10 transition focus-within:ring-4 focus-within:ring-amber-200/20 sm:px-5">
@@ -84,59 +82,57 @@ function TraditionGrid() {
               <input
                 aria-label="Search traditions and scriptures"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search a tradition or text, like Bhagavad Gita…"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search a tradition or scripture…"
                 className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
               />
-              <span className="hidden shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-500 sm:inline">
-                Search
-              </span>
             </label>
+            <p className="mt-3 text-xs text-slate-300">
+              For example: Hindu, Buddhism, or Bhagavad Gita.
+            </p>
           </div>
 
-          <div aria-hidden="true" className="absolute bottom-8 right-12 hidden h-36 w-36 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-amber-100 shadow-inner lg:flex">
+          <div
+            aria-hidden="true"
+            className="absolute bottom-8 right-12 hidden h-36 w-36 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-amber-100 shadow-inner lg:flex"
+          >
             <span className="absolute inset-3 rounded-full border border-white/10" />
             <BookOpenIcon className="h-14 w-14" />
           </div>
         </section>
 
-        <section className="relative z-10 -mt-5 mx-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-5 shadow-lg shadow-slate-900/5 sm:mx-8 sm:px-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Looking for guidance on a life question?</p>
-              <p className="mt-1 text-sm text-slate-500">The Wisdom Guide can help you explore it through scripture.</p>
-            </div>
-            <button
-              onClick={() => navigate("/wisdom-guide?q=")}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#263d37] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1b2f2a] focus:outline-none focus:ring-4 focus:ring-emerald-100"
-            >
-              Ask the Wisdom Guide <span aria-hidden="true">→</span>
-            </button>
-          </div>
-        </section>
-
-        <section className="mt-16">
+        <section className="mt-14">
           <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Explore the collection</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                Start here
+              </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-                Find a teaching that speaks to you
+                Choose a wisdom tradition
               </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                Pick a collection to open its chat. Ask a question and see the
+                scripture passages behind the answer.
+              </p>
             </div>
             {!loading && collections.length > 0 && (
               <span className="text-sm text-slate-500">
-                {filtered.length} {filtered.length === 1 ? "collection" : "collections"}
+                Showing {filtered.length} of {collections.length} traditions
               </span>
             )}
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {loading &&
-              Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-80 animate-pulse rounded-3xl bg-white shadow-sm" />
+              Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-80 animate-pulse rounded-3xl bg-white shadow-sm"
+                />
               ))}
 
             {!loading &&
+              !error &&
               filtered.map((collection) => {
                 const style =
                   TRADITION_STYLES[collection.tradition?.toLowerCase()] ||
@@ -190,27 +186,52 @@ function TraditionGrid() {
                       </div>
                       <p className="mt-4 flex items-center gap-2 text-xs text-slate-500">
                         <BookOpenIcon className="h-4 w-4 text-emerald-800" />
-                        {collection.textTitles.length} texts to explore
+                        {collection.textCount ?? collection.textTitles.length}{" "}
+                        texts in this collection
                       </p>
                       <button
-                        onClick={() => navigate(`/library/${collection.slug || collection.id}`)}
+                        type="button"
+                        onClick={() =>
+                          navigate(`/chat/${collection.slug || collection.id}`)
+                        }
                         className="mt-5 w-full rounded-xl bg-[#263d37] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1b2f2a] focus:outline-none focus:ring-4 focus:ring-emerald-100"
                       >
-                        Explore this tradition
+                        Start a {collection.tradition} conversation
                       </button>
                     </div>
                   </article>
                 );
               })}
 
-            {!loading && filtered.length === 0 && (
+            {!loading && error && (
+              <div className="col-span-full rounded-3xl border border-amber-200 bg-amber-50 px-6 py-10 text-center">
+                <h3 className="font-semibold text-slate-900">
+                  The library couldn’t load
+                </h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  Check your connection and try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={refetch}
+                  className="mt-4 rounded-xl bg-[#263d37] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1b2f2a] focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && filtered.length === 0 && (
               <div className="col-span-full rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
                 <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-800">
                   <SearchIcon className="h-5 w-5" />
                 </span>
-                <h3 className="mt-4 font-semibold text-slate-900">No collections found</h3>
+                <h3 className="mt-4 font-semibold text-slate-900">
+                  No collections found
+                </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Try another search term{query ? ` instead of “${query}”` : ""}.
+                  Try another search term
+                  {query ? ` instead of “${query}”` : ""}.
                 </p>
               </div>
             )}
@@ -219,119 +240,32 @@ function TraditionGrid() {
 
         <section className="mt-20">
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">A simple way to begin</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Bring your questions. Take what resonates.</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+              A simple way to begin
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+              Bring your questions. Take what resonates.
+            </h2>
           </div>
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {HOW_TO_STEPS.map((s) => (
-              <div key={s.step} className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7">
+            {HOW_TO_STEPS.map((step) => (
+              <div
+                key={step.step}
+                className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7"
+              >
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 font-serif text-lg font-semibold text-orange-800">
-                  {s.step}
+                  {step.step}
                 </span>
-                <h3 className="mt-5 text-base font-semibold text-slate-900">{s.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-500">{s.description}</p>
+                <h3 className="mt-5 text-base font-semibold text-slate-900">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {step.description}
+                </p>
               </div>
             ))}
           </div>
         </section>
-
-        <section className="mt-16 rounded-3xl border border-[#e7e1d5] bg-[#eeece3] px-6 py-8 text-center sm:px-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">Start with what matters to you</p>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            You don’t need to know where to begin. Choose a collection that feels meaningful, or bring a personal question to the Wisdom Guide.
-          </p>
-          <button
-            onClick={() => navigate("/wisdom-guide?q=")}
-            className="mt-5 rounded-xl border border-emerald-900/20 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-emerald-100"
-          >
-            Explore a question with the Wisdom Guide
-          </button>
-        </section>
-      </main>
-    </div>
-  );
-}
-
-// ---- /library/:slug -----------------------------------------------------
-
-function TraditionTexts({ slug }) {
-  const navigate = useNavigate();
-
-  const { data: tradition, loading: traditionLoading } = useFetch(
-    () => libraryApi.getTraditionBySlug(slug),
-    [slug]
-  );
-  const { data: texts, loading: textsLoading } = useFetch(
-    () => libraryApi.getTraditionTexts(slug),
-    [slug]
-  );
-
-  return (
-    <div className="min-h-screen bg-[#f7f6f2]">
-      <BackBar />
-
-      <main className="mx-auto max-w-7xl px-5 pb-20 pt-8 sm:px-8">
-        {traditionLoading ? (
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <div className="h-3 w-20 animate-pulse rounded bg-slate-200" />
-            <div className="mt-4 h-10 w-64 animate-pulse rounded bg-slate-200" />
-          </div>
-        ) : (
-          <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-6 py-10 text-white sm:px-10 sm:py-12">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-200">Scripture collection</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">
-              {tradition?.name || "Tradition"}
-              <span className="font-serif italic text-orange-200"> texts</span>
-            </h1>
-            {tradition?.tagline && (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">{tradition.tagline}</p>
-            )}
-          </section>
-        )}
-
-        <div className="mb-5 mt-10 flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">Browse and reflect</p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-900">Texts in this collection</h2>
-          </div>
-          {!textsLoading && texts?.length > 0 && (
-            <span className="text-sm text-slate-500">{texts.length} {texts.length === 1 ? "text" : "texts"}</span>
-          )}
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {textsLoading &&
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-36 animate-pulse rounded-3xl bg-white" />
-            ))}
-
-          {!textsLoading &&
-            texts?.map((text) => (
-              <button
-                key={text.id}
-                onClick={() => navigate(`/chat/${slug}/${text.id}`)}
-                className="group flex min-h-36 items-start gap-5 rounded-3xl border border-slate-200/80 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-orange-100"
-              >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-800 transition group-hover:bg-orange-100">
-                  <BookOpenIcon className="h-5 w-5" />
-                </span>
-                <span className="flex-1">
-                  <span className="block text-base font-semibold text-slate-900">{text.title}</span>
-                  {text.description && (
-                    <span className="mt-2 block text-sm leading-6 text-slate-500">{text.description}</span>
-                  )}
-                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-orange-800">
-                    Open text <span aria-hidden="true" className="text-base transition group-hover:translate-x-1">→</span>
-                  </span>
-                </span>
-              </button>
-            ))}
-
-          {!textsLoading && (!texts || texts.length === 0) && (
-            <div className="col-span-full rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500">
-              No texts found for this tradition yet.
-            </div>
-          )}
-        </div>
       </main>
     </div>
   );

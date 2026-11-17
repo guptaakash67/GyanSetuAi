@@ -48,17 +48,17 @@
       {
         "step": 1,
         "title": "Choose a tradition",
-        "description": "Start with a collection that feels familiar, or explore a perspective that is new to you."
+        "description": "Choose the scripture tradition you want to explore."
       },
       {
         "step": 2,
-        "title": "Find a text",
-        "description": "Browse the available scriptures and teachings in that collection."
+        "title": "Bring a question",
+        "description": "Ask about a challenge, idea, or teaching that matters to you."
       },
       {
         "step": 3,
-        "title": "Bring your questions",
-        "description": "Open a text to explore its teachings and reflect on how they relate to your life."
+        "title": "Explore the sources",
+        "description": "Review the scripture passages behind the answer and continue exploring."
       }
     ]
   },

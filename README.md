@@ -156,9 +156,10 @@ preserved. The model loads lazily on Vercel and is cached in `/tmp` while a func
 instance remains warm. Large-function availability, build size, cold starts, and
 runtime cost depend on the Vercel project and plan; validate these before cutover.
 
-The frontend's default API URL is set in `client/src/data/app-config.json`; set
-`VITE_API_URL=https://gyansetu-api.vercel.app` in the frontend Vercel project's
-production environment as well. Local `.env` files are excluded from deployments.
+The frontend calls `/api` on its own origin, and `client/vercel.json` rewrites those
+requests to `https://gyansetu-api.vercel.app`. This keeps browser requests same-origin.
+For local development, set `VITE_API_URL` in the local client `.env` to the local API.
+Local `.env` files are excluded from deployments.
 SMTP delivery has been verified with an approved test signup address.
 
 ### Backend

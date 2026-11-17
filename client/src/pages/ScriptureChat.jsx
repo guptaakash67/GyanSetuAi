@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BackBar from "../components/BackBar";
 import { BookOpenIcon, ArrowLeftIcon, SparklesIcon } from "../components/Icons";
-import { api } from "../lib/api";
+import { api, libraryApi } from "../lib/api";
+import { useFetch } from "../hooks/useFetch";
 
 import scriptureInfo from "../data/scripture-info.json";
 
@@ -16,6 +17,10 @@ export default function ScriptureChat() {
   const { tradition, textId } = useParams();
   const navigate = useNavigate();
   const scripture = scriptureInfo[textId];
+
+  if (!textId) {
+    return <TraditionChat traditionSlug={tradition} />;
+  }
 
   if (!scripture) {
     return (
@@ -32,15 +37,65 @@ export default function ScriptureChat() {
     );
   }
 
-  return <ScriptureChatView key={textId} tradition={tradition} scripture={scripture} />;
+  return <ScriptureChatView key={textId} traditionSlug={tradition} scripture={scripture} />;
 }
 
-function ScriptureChatView({ tradition, scripture }) {
+function TraditionChat({ traditionSlug }) {
+  const { data: traditionInfo } = useFetch(
+    () => libraryApi.getTraditionBySlug(traditionSlug),
+    [traditionSlug]
+  );
+  const exampleScripture = Object.values(scriptureInfo).find(
+    (item) => item.traditionSlug === traditionSlug
+  );
+
+  if (!exampleScripture) {
+    return (
+      <div className="min-h-screen bg-[#f7f6f2]">
+        <BackBar />
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+          <BookOpenIcon className="h-10 w-10 text-slate-300" />
+          <p className="mt-4 font-medium text-slate-700">We couldn’t find this tradition.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <ScriptureChatView
+      key={traditionSlug}
+      traditionSlug={traditionSlug}
+      traditionInfo={traditionInfo}
+      scripture={null}
+      exampleScripture={exampleScripture}
+    />
+  );
+}
+
+function ScriptureChatView({
+  traditionSlug,
+  traditionInfo,
+  scripture,
+  exampleScripture = scripture,
+}) {
   const navigate = useNavigate();
+  const chatTraditionSlug = scripture?.traditionSlug ?? traditionSlug;
+  const traditionName = scripture?.tradition ?? exampleScripture.tradition;
+  const chatTitle = scripture?.title ?? traditionInfo?.name ?? `${traditionName} Scriptures`;
+  const gradient = scripture?.gradient ?? exampleScripture.gradient;
+  const suggestedQuestions = scripture
+    ? SUGGESTED_QUESTIONS
+    : [
+        `What are the key teachings in ${traditionName} scriptures?`,
+        `What do ${traditionName} scriptures teach about finding peace?`,
+        `How can I apply ${traditionName} wisdom in daily life?`,
+      ];
   const [messages, setMessages] = useState(() => [{
     id: "welcome",
     role: "assistant",
-    content: `I'm here to help you explore the wisdom of "${scripture.title}". Feel free to ask any questions about this scripture or how its teachings might apply to your life. What would you like to understand better?`,
+    content: scripture
+      ? `I'm here to help you explore the wisdom of "${scripture.title}". Feel free to ask any questions about this scripture or how its teachings might apply to your life. What would you like to understand better?`
+      : `I'm here to help you explore the wisdom of ${traditionName} scriptures. Ask a question about their teachings and how they might apply to your life.`,
   }]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -61,9 +116,9 @@ function ScriptureChatView({ tradition, scripture }) {
     setSending(true);
 
     try {
-      const res = await api.post(`/chat/${scripture.traditionSlug}`, {
+      const res = await api.post(`/chat/${chatTraditionSlug}`, {
         message: text,
-        tradition: scripture.traditionSlug,
+        tradition: chatTraditionSlug,
       });
 
       setMessages((prev) => [
@@ -95,26 +150,30 @@ function ScriptureChatView({ tradition, scripture }) {
 
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 pb-6 pt-5 sm:px-6 lg:h-[calc(100vh-4.5rem)] lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-6 lg:px-8 lg:pb-6 lg:pt-6">
         <aside className="h-fit overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
-          <div className={`relative flex h-36 items-end overflow-hidden bg-gradient-to-br p-6 ${scripture.gradient}`}>
+          <div className={`relative flex h-36 items-end overflow-hidden bg-gradient-to-br p-6 ${gradient}`}>
             <span className="absolute -bottom-16 -right-4 text-[11rem] leading-none text-white/10" aria-hidden="true">✦</span>
             <span className="relative rounded-full border border-white/25 bg-black/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-              {scripture.tradition}
+              {traditionName}
             </span>
           </div>
 
           <div className="p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800">Reflect on a text</p>
-            <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-slate-900">{scripture.title}</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">{scripture.description}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800">
+              {scripture ? "Reflect on a text" : "Explore a tradition"}
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-slate-900">{chatTitle}</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              {scripture ? scripture.description : traditionInfo?.tagline}
+            </p>
 
-            {scripture.verse && (
+            {scripture?.verse && (
               <blockquote className="mt-6 rounded-2xl border-l-2 border-amber-600 bg-[#f7f5ef] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-800">A thought to begin with</p>
                 <p className="mt-2 font-serif text-sm italic leading-6 text-slate-700">“{scripture.verse}”</p>
               </blockquote>
             )}
 
-            <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+            {scripture && <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Theme</p>
                 <p className="mt-1 text-sm font-medium text-slate-700">{scripture.category}</p>
@@ -122,27 +181,31 @@ function ScriptureChatView({ tradition, scripture }) {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-900">
                 <BookOpenIcon className="h-5 w-5" />
               </span>
-            </div>
+            </div>}
 
             <button
-              onClick={() => navigate(`/library/${tradition}`)}
+              onClick={() => navigate(`/library/${chatTraditionSlug}`)}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-emerald-800/30 hover:bg-emerald-50/50 hover:text-emerald-950"
             >
               <ArrowLeftIcon className="h-4 w-4" />
-              Back to {scripture.tradition} texts
+              Browse {traditionName} texts
             </button>
           </div>
         </aside>
 
-        <section aria-label={`Chat about ${scripture.title}`} className="flex min-h-[70vh] flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm lg:min-h-0">
+        <section aria-label={`Chat about ${chatTitle}`} className="flex min-h-[70vh] flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm lg:min-h-0">
           <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#263d37] text-white">
                 <SparklesIcon className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">Explore the teaching</p>
-                <p className="truncate text-xs text-slate-500">{scripture.title} · {scripture.tradition}</p>
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {scripture ? "Explore the teaching" : "Ask about the scriptures"}
+                </p>
+                <p className="truncate text-xs text-slate-500">
+                  {scripture ? `${scripture.title} · ${traditionName}` : chatTitle}
+                </p>
               </div>
             </div>
             <span className="hidden items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 sm:inline-flex">
@@ -160,7 +223,7 @@ function ScriptureChatView({ tradition, scripture }) {
               <div className="ml-10 pt-1">
                 <p className="mb-2 text-xs font-medium text-slate-500">Not sure where to start? Try asking:</p>
                 <div className="flex flex-wrap gap-2">
-                  {SUGGESTED_QUESTIONS.map((question) => (
+                  {suggestedQuestions.map((question) => (
                     <button
                       key={question}
                       type="button"
@@ -202,8 +265,8 @@ function ScriptureChatView({ tradition, scripture }) {
                     handleSend(e);
                   }
                 }}
-                aria-label={`Ask a question about ${scripture.title}`}
-                placeholder={`Ask what ${scripture.title} can teach you…`}
+                aria-label={`Ask a question about ${chatTitle}`}
+                placeholder={`Ask what ${chatTitle} can teach you…`}
                 className="max-h-32 min-h-11 flex-1 resize-y bg-transparent px-3 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400"
               />
               <button
@@ -215,7 +278,9 @@ function ScriptureChatView({ tradition, scripture }) {
                 <span aria-hidden="true">↑</span>
               </button>
             </div>
-            <p className="mt-2 text-center text-[11px] text-slate-400">Answers are guided by the selected scripture. Press Enter to send · Shift + Enter for a new line.</p>
+            <p className="mt-2 text-center text-[11px] text-slate-400">
+              Answers are guided by {scripture ? "the selected scripture" : `${traditionName} scriptures`}. Press Enter to send · Shift + Enter for a new line.
+            </p>
           </form>
         </section>
       </main>

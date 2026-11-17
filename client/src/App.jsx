@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -18,13 +18,14 @@ function App() {
           {/* Public routes */}
           <Route path="/" element={<Home />} />
           <Route path="/library" element={<Library />} />
-          <Route path="/library/:slug" element={<Library />} />
+          <Route path="/library/:slug" element={<Navigate to="/library" replace />} />
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
 
           {/* Protected routes */}
           <Route path="/wisdom-guide" element={<ProtectedRoute><WisdomGuide /></ProtectedRoute>} />
           <Route path="/journey" element={<ProtectedRoute><Journey /></ProtectedRoute>} />
+          <Route path="/chat/:tradition" element={<ProtectedRoute><ScriptureChat /></ProtectedRoute>} />
           <Route path="/chat/:tradition/:textId" element={<ProtectedRoute><ScriptureChat /></ProtectedRoute>} />  {/* ← ADD THIS */}
         </Routes>
       </BrowserRouter>

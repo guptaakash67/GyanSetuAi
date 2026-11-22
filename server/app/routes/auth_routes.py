@@ -3,12 +3,16 @@ Auth routes:
   POST /auth/signup        -> sends OTP to email
   POST /auth/verify-otp    -> verifies OTP, creates user, returns JWT
   POST /auth/signin        -> email + password -> returns JWT
+  POST /auth/forgot-password -> sends a password reset code
+  POST /auth/reset-password -> verifies code and updates the password
   GET  /auth/me            -> returns current user from JWT
 """
 
 import os
 import secrets
 import smtplib
+import hmac
+import logging
 
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
@@ -16,7 +20,7 @@ from email.mime.multipart import MIMEMultipart
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.orm import Session
 
 import jwt
@@ -30,6 +34,7 @@ from app.core.redis_client import redis_client
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
+logger = logging.getLogger(__name__)
 
 
 # ── Config ───────────────────────────────────────────────────────────────────
@@ -40,6 +45,9 @@ JWT_EXPIRE_DAYS = AUTH_CONFIG["jwt_expire_days"]
 JWT_ALGORITHM = AUTH_CONFIG["jwt_algorithm"]
 OTP_EXPIRE_SECONDS = AUTH_CONFIG["otp_expire_seconds"]
 OTP_LENGTH = AUTH_CONFIG["otp_length"]
+PASSWORD_RESET_OTP_PREFIX = "password_reset_otp:"
+PASSWORD_RESET_ATTEMPTS_PREFIX = "password_reset_attempts:"
+MAX_PASSWORD_RESET_ATTEMPTS = 5
 SMTP_HOST = AUTH_CONFIG["smtp_host"]
 SMTP_PORT = AUTH_CONFIG["smtp_port"]
 SMTP_EMAIL = os.getenv("SMTP_EMAIL")
@@ -62,6 +70,23 @@ class VerifyOTPRequest(BaseModel):
 class SigninRequest(BaseModel):
     email: EmailStr
     password: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str = Field(min_length=OTP_LENGTH, max_length=OTP_LENGTH)
+    new_password: str = Field(min_length=6, max_length=72)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_bytes(cls, password: str) -> str:
+        if len(password.encode("utf-8")) > 72:
+            raise ValueError("Password must be no more than 72 bytes.")
+        return password
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -88,6 +113,30 @@ def get_otp(email: str):
 
 def delete_otp(email: str):
     redis_client.delete(f"otp:{email}")
+
+
+def send_password_reset_email(to_email: str, otp: str, name: str):
+    if not SMTP_EMAIL or not SMTP_PASSWORD:
+        raise HTTPException(
+            status_code=500,
+            detail="Email service not configured."
+        )
+
+    msg = MIMEText(
+        f"Hi {name},\n\n"
+        f"Your GyanSetu password reset code is {otp}.\n"
+        f"It expires in {OTP_EXPIRE_SECONDS} seconds. "
+        "If you did not request this, you can ignore this email.",
+        "plain",
+    )
+    msg["Subject"] = "GyanSetu - Password Reset Code"
+    msg["From"] = SMTP_EMAIL
+    msg["To"] = to_email
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_EMAIL, SMTP_PASSWORD)
+        server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
 
 
 def send_otp_email(to_email: str, otp: str, name: str):
@@ -416,6 +465,90 @@ def signin(
             "initial": user.name[0].upper(),
         },
     }
+
+
+# ── Password Reset ───────────────────────────────────────────────────────────
+
+@router.post("/forgot-password")
+def forgot_password(
+    body: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    email = body.email.lower()
+    user = (
+        db.query(User)
+        .filter(User.email == email, User.verified == True)
+        .first()
+    )
+
+    if user:
+        otp = generate_otp()
+        otp_key = f"{PASSWORD_RESET_OTP_PREFIX}{email}"
+        attempts_key = f"{PASSWORD_RESET_ATTEMPTS_PREFIX}{email}"
+        redis_client.setex(otp_key, OTP_EXPIRE_SECONDS, otp)
+        redis_client.delete(attempts_key)
+        try:
+            send_password_reset_email(email, otp, user.name)
+        except (HTTPException, OSError, smtplib.SMTPException) as error:
+            redis_client.delete(otp_key, attempts_key)
+            logger.exception("Failed to send password reset email")
+            raise HTTPException(
+                status_code=503,
+                detail="Unable to send a reset code right now. Please try again later."
+            ) from error
+
+    return {
+        "message": "If an account with that email exists, a password reset code has been sent."
+    }
+
+
+@router.post("/reset-password")
+def reset_password(
+    body: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    email = body.email.lower()
+    otp_key = f"{PASSWORD_RESET_OTP_PREFIX}{email}"
+    attempts_key = f"{PASSWORD_RESET_ATTEMPTS_PREFIX}{email}"
+    stored_otp = redis_client.get(otp_key)
+    attempts = int(redis_client.get(attempts_key) or 0)
+
+    if (
+        not stored_otp
+        or attempts >= MAX_PASSWORD_RESET_ATTEMPTS
+        or not hmac.compare_digest(body.otp, stored_otp)
+    ):
+        if stored_otp and attempts < MAX_PASSWORD_RESET_ATTEMPTS:
+            attempts = redis_client.incr(attempts_key)
+            if attempts == 1:
+                redis_client.expire(attempts_key, OTP_EXPIRE_SECONDS)
+            if attempts >= MAX_PASSWORD_RESET_ATTEMPTS:
+                redis_client.delete(otp_key)
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired password reset code."
+        )
+
+    user = (
+        db.query(User)
+        .filter(User.email == email, User.verified == True)
+        .first()
+    )
+    if not user:
+        redis_client.delete(otp_key, attempts_key)
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired password reset code."
+        )
+
+    redis_client.delete(otp_key, attempts_key)
+    user.hashed_password = bcrypt.hashpw(
+        body.new_password.encode(),
+        bcrypt.gensalt()
+    ).decode()
+    db.commit()
+
+    return {"message": "Password reset successfully. Please sign in."}
 
 
 # ── Current User ─────────────────────────────────────────────────────────────

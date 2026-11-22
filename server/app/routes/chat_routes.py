@@ -99,8 +99,8 @@ def _persist_chat_and_insight(
 @router.post("/wisdom/search")
 def wisdom_search(body: WisdomSearchRequest):
     """
-    Semantic search — finds relevant scriptures for a life challenge.
-    Public endpoint — no auth required.
+    Semantic search —- finds relevant scriptures for a life challenge.
+    Public endpoint —- no auth required.
     """
     if not body.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty")

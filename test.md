@@ -12,6 +12,8 @@ Authentication
 POST /auth/signup — JSON: {"name":"Test User","email":"you@example.com","password":"your-password"}
 POST /auth/verify-otp — JSON: {"email":"you@example.com","otp":"123456"}
 POST /auth/signin — JSON: {"email":"you@example.com","password":"your-password"}
+POST /auth/forgot-password — JSON: {"email":"you@example.com"}
+POST /auth/reset-password — JSON: {"email":"you@example.com","otp":"123456","new_password":"new-password"}
 GET /auth/me
 Wisdom and chat
 
